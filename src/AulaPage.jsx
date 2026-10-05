@@ -20,13 +20,21 @@ function StudentCreator({ onCreated }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [canRepair, setCanRepair] = useState(false);
   const update = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
-  const submit = async (event) => {
-    event.preventDefault(); setBusy(true); setMessage(''); setError('');
+
+  const submitAction = async (action) => {
+    if (form.full_name.trim().length < 3 || form.cedula.replace(/\D/g, '').length !== 10 || form.password.length < 10) {
+      setError('Completa el nombre, los 10 dígitos de la cédula y una contraseña de al menos 10 caracteres.');
+      return;
+    }
+    if (action === 'repair' && !window.confirm('Se actualizará el perfil existente y se reemplazará su contraseña por la que escribiste. ¿Continuar?')) return;
+    setBusy(true); setMessage(''); setError('');
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Tu sesión de instructora terminó. Inicia sesión de nuevo.');
       const { data, error: invokeError } = await supabase.functions.invoke('create-student', {
-        body: { ...form, cedula: form.cedula.replace(/\D/g, '') },
+        body: { ...form, cedula: form.cedula.replace(/\D/g, ''), action },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (invokeError) {
@@ -40,15 +48,21 @@ function StudentCreator({ onCreated }) {
         throw new Error(detail);
       }
       if (data?.error) throw new Error(data.error);
-      setMessage(`Cuenta creada para ${data.full_name}. Entrega al representante la cédula como usuario y la contraseña inicial de forma privada.`);
+      setMessage(data.repaired
+        ? `Acceso actualizado para ${data.full_name}. Entrega la nueva contraseña en privado.`
+        : `Cuenta creada para ${data.full_name}. Entrega al representante la cédula como usuario y la contraseña inicial de forma privada.`);
       setForm({ full_name: '', cedula: '', level: 'principiantes', password: '' });
+      setCanRepair(false);
       onCreated();
-    } catch (reason) { setError(reason.message || 'No se pudo crear la cuenta.'); }
-    finally { setBusy(false); }
+    } catch (reason) {
+      const detail = reason.message || 'No se pudo crear la cuenta.';
+      setError(detail);
+      setCanRepair(detail.includes('Ya existe una cuenta con esa cédula.'));
+    } finally { setBusy(false); }
   };
-  return <section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">01 · Acceso seguro</span><h2>Crear cuenta de estudiante</h2><p>El instructor asigna el nivel y una contraseña inicial privada.</p></div><span className="classroom-panel-number">01</span></div><form className="classroom-form classroom-grid-form" onSubmit={submit}><label>Nombre completo<input value={form.full_name} onChange={(event) => update('full_name', event.target.value)} autoComplete="name" required minLength="3" placeholder="Nombre y apellido" /></label><label>Cédula<input value={form.cedula} onChange={(event) => update('cedula', event.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" required placeholder="10 dígitos" /></label><label>Nivel<select value={form.level} onChange={(event) => update('level', event.target.value)}>{classroomLevels.map((level) => <option key={level.id} value={level.id}>{level.label}</option>)}</select></label><label>Contraseña inicial<input type="password" value={form.password} onChange={(event) => update('password', event.target.value)} minLength="10" required autoComplete="new-password" placeholder="Mínimo 10 caracteres" /></label><button className="button button-primary classroom-submit" disabled={busy}>{busy ? 'Creando…' : 'Crear cuenta'} <span>→</span></button></form>{error && <p className="classroom-error" role="alert">{error}</p>}{message && <p className="classroom-success" role="status">{message}</p>}<p className="classroom-form-note">La cuenta se crea con la cédula como usuario. La contraseña no se envía ni se muestra de nuevo; entrégala en privado.</p></section>;
-}
 
+  return <section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">01 · Acceso seguro</span><h2>Crear cuenta de estudiante</h2><p>El instructor asigna el nivel y una contraseña inicial privada.</p></div><span className="classroom-panel-number">01</span></div><form className="classroom-form classroom-grid-form" onSubmit={(event) => { event.preventDefault(); submitAction('create'); }}><label>Nombre completo<input value={form.full_name} onChange={(event) => update('full_name', event.target.value)} autoComplete="name" required minLength="3" placeholder="Nombre y apellido" /></label><label>Cédula<input value={form.cedula} onChange={(event) => update('cedula', event.target.value.replace(/\D/g, '').slice(0, 10))} inputMode="numeric" required placeholder="10 dígitos" /></label><label>Nivel<select value={form.level} onChange={(event) => update('level', event.target.value)}>{classroomLevels.map((level) => <option key={level.id} value={level.id}>{level.label}</option>)}</select></label><label>Contraseña inicial<input type="password" value={form.password} onChange={(event) => update('password', event.target.value)} minLength="10" required autoComplete="new-password" placeholder="Mínimo 10 caracteres" /></label><button className="button button-primary classroom-submit" disabled={busy}>{busy ? 'Procesando…' : 'Crear cuenta'} <span>→</span></button></form>{error && <p className="classroom-error" role="alert">{error}</p>}{canRepair && <button className="button classroom-submit" type="button" disabled={busy} onClick={() => submitAction('repair')}>{busy ? 'Actualizando…' : 'Actualizar cuenta existente y restablecer contraseña'}</button>}{message && <p className="classroom-success" role="status">{message}</p>}<p className="classroom-form-note">La cuenta se crea con la cédula como usuario. La contraseña no se envía ni se muestra de nuevo; entrégala en privado.</p></section>;
+}
 function ProgressEditor({ students, onSaved }) {
   const [studentId, setStudentId] = useState('');
   const [level, setLevel] = useState('principiantes');

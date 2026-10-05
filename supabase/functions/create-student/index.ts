@@ -44,26 +44,52 @@ Deno.serve(async (request) => {
   if (password.length < 10) return response({ error: 'La contraseña inicial debe tener al menos 10 caracteres.' }, 400);
 
   const email = `${cedula}@login.taewoong.invalid`;
-  const { data, error } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { full_name: fullName, cedula, level },
-  });
-  if (error) return response({ error: error.message.includes('already') ? 'Ya existe una cuenta con esa cédula.' : 'No se pudo crear la cuenta del estudiante.' }, 400);
+  const action = body.action === 'repair' ? 'repair' : 'create';
+  let userId: string;
+  let repaired = false;
+
+  if (action === 'repair') {
+    const { data: userList, error: listError } = await adminClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (listError) return response({ error: 'No se pudo buscar la cuenta existente.' }, 500);
+    const existingUser = userList.users.find((item) => item.email?.toLowerCase() === email.toLowerCase());
+    if (!existingUser) return response({ error: 'No se encontró una cuenta existente con esa cédula.' }, 404);
+
+    const { data: existingProfile, error: existingProfileError } = await adminClient.from('profiles')
+      .select('role').eq('id', existingUser.id).maybeSingle();
+    if (existingProfileError) return response({ error: 'No se pudo revisar el perfil existente.' }, 500);
+    if (existingProfile?.role === 'instructor') return response({ error: 'Esta cédula pertenece a una cuenta de instructora y no se puede reparar como estudiante.' }, 409);
+
+    const { error: updateError } = await adminClient.auth.admin.updateUserById(existingUser.id, {
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, cedula, level },
+    });
+    if (updateError) return response({ error: 'No se pudo actualizar el acceso de la cuenta existente.' }, 500);
+    userId = existingUser.id;
+    repaired = true;
+  } else {
+    const { data, error } = await adminClient.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name: fullName, cedula, level },
+    });
+    if (error) return response({ error: error.message.includes('already') ? 'Ya existe una cuenta con esa cédula.' : 'No se pudo crear la cuenta del estudiante.' }, 400);
+    userId = data.user.id;
+  }
 
   // Keep the profile complete even if the auth.users trigger is missing or has older logic.
   const { error: profileError } = await adminClient.from('profiles').upsert({
-    id: data.user.id,
+    id: userId,
     role: 'student',
     full_name: fullName,
     cedula,
     level: String(level),
   }, { onConflict: 'id' });
   if (profileError) {
-    await adminClient.auth.admin.deleteUser(data.user.id);
-    return response({ error: 'La cuenta se creó, pero no se pudieron guardar los datos del estudiante. Revisa la migración de perfiles.' }, 500);
+    if (!repaired) await adminClient.auth.admin.deleteUser(userId);
+    return response({ error: 'No se pudieron guardar los datos del perfil. Revisa la migración de perfiles.' }, 500);
   }
 
-  return response({ user_id: data.user.id, full_name: fullName, cedula, level });
+  return response({ user_id: userId, full_name: fullName, cedula, level, repaired });
 });
