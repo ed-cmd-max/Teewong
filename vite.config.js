@@ -4,7 +4,7 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const pages = ['index.html', 'club.html', 'programas.html', 'horarios.html', 'costos.html', 'politicas.html'];
+const pages = ['index.html', 'club.html', 'programas.html', 'horarios.html', 'costos.html', 'politicas.html', 'aula.html'];
 
 export default defineConfig({
   plugins: [react()],
@@ -14,3 +14,4 @@ export default defineConfig({
     },
   },
 });
+

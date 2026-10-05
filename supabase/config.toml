@@ -1,0 +1,4 @@
+project_id = "taewoong"
+
+[functions.create-student]
+verify_jwt = true

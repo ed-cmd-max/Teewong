@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import AulaPage from './AulaPage.jsx';
 
 const navigation = [
   ['Inicio', './index.html', 'home'],
@@ -7,6 +8,7 @@ const navigation = [
   ['Horarios', './horarios.html', 'horarios'],
   ['Costos', './costos.html', 'costos'],
   ['Políticas', './politicas.html', 'politicas'],
+  ['Aula virtual', './aula.html', 'aula'],
   ['Galería', './index.html#galeria', 'galeria'],
 ];
 
@@ -50,7 +52,7 @@ function Header({ current, onEnroll }) {
 }
 
 function Footer() {
-  return <footer className="site-footer"><span>© 2026 TAE WOONG · Club Especializado Formativo de Taekwondo</span><a href="./politicas.html">Privacidad y uso de imagen</a><a href={instagramUrl} target="_blank" rel="noreferrer">Instagram</a><a href={whatsappUrl} target="_blank" rel="noreferrer">WhatsApp</a><span>Formación · Disciplina · Valores · Superación</span></footer>;
+  return <footer className="site-footer"><span>© 2026 TAE WOONG · Club Especializado Formativo de Taekwondo</span><a href="./politicas.html">Privacidad y uso de imagen</a><a href="./aula.html">Aula virtual</a><a href={instagramUrl} target="_blank" rel="noreferrer">Instagram</a><a href={whatsappUrl} target="_blank" rel="noreferrer">WhatsApp</a><span>Formación · Disciplina · Valores · Superación</span></footer>;
 }
 
 function PageIntro({ eyebrow, title, text }) {
@@ -66,24 +68,61 @@ function ScheduleCard({ item }) {
 }
 
 function GallerySection() {
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [showAll, setShowAll] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const activeImage = galleryImages[activeIndex];
+  const visibleThumbnails = Array.from({ length: Math.min(5, galleryImages.length) }, (_, offset) => (activeIndex + offset - 2 + galleryImages.length) % galleryImages.length);
+  const moveImage = (step) => setActiveIndex((index) => (index + step + galleryImages.length) % galleryImages.length);
+
   useEffect(() => {
-    if (!selectedImage) return undefined;
-    const closeOnEscape = (event) => { if (event.key === 'Escape') setSelectedImage(null); };
-    document.addEventListener('keydown', closeOnEscape);
+    if (!lightboxOpen) return undefined;
+    const handleKeys = (event) => {
+      if (event.key === 'Escape') setLightboxOpen(false);
+      if (event.key === 'ArrowLeft') moveImage(-1);
+      if (event.key === 'ArrowRight') moveImage(1);
+    };
+    document.addEventListener('keydown', handleKeys);
     document.body.classList.add('gallery-open');
     return () => {
-      document.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('keydown', handleKeys);
       document.body.classList.remove('gallery-open');
     };
-  }, [selectedImage]);
+  }, [lightboxOpen]);
+
+  if (!activeImage) return null;
+  const imageCount = String(galleryImages.length).padStart(2, '0');
+  const currentCount = String(activeIndex + 1).padStart(2, '0');
+  const progress = ((activeIndex + 1) / galleryImages.length) * 100;
+
   return <section className="gallery-section" id="galeria">
-    <div className="section-head"><div className="eyebrow">Así entrenamos</div><h2>Momentos Taewoong.</h2><p>Disciplina, compañerismo y crecimiento en cada entrenamiento.</p></div>
-    <div className="gallery-grid">{galleryImages.map((image, index) => <button className="gallery-item" type="button" key={image.src} onClick={() => setSelectedImage(image)} aria-label={'Ampliar fotografía ' + (index + 1)}><img src={image.src} alt={image.alt} loading="lazy" /></button>)}</div>
-    {selectedImage && <div className="gallery-lightbox" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setSelectedImage(null); }}><div className="gallery-lightbox-panel" role="dialog" aria-modal="true" aria-label="Fotografía ampliada"><button className="gallery-close" type="button" onClick={() => setSelectedImage(null)} aria-label="Cerrar fotografía">×</button><img src={selectedImage.src} alt={selectedImage.alt} /></div></div>}
+    <div className="gallery-heading">
+      <div><div className="eyebrow">La vida en el dojang</div><h2>Crece en cada movimiento.</h2><p>Entrenamientos, compañerismo y pequeños logros que construyen grandes caminos.</p></div>
+      <div className="gallery-heading-mark"><span>TAEWOONG</span><strong>{imageCount}</strong><small>momentos<br />para recordar</small></div>
+    </div>
+    <div className="gallery-layout">
+      <div className="gallery-stage">
+        <button className="gallery-feature-image" type="button" onClick={() => setLightboxOpen(true)} aria-label="Ampliar fotografía actual">
+          <img key={activeImage.src} src={activeImage.src} alt={activeImage.alt} />
+          <span className="gallery-image-shade" />
+          <span className="gallery-feature-copy"><small>FORMACIÓN · DISCIPLINA · VALORES</small><strong>Más que un deporte.<br /><em>Un estilo de vida.</em></strong></span>
+        </button>
+        <button className="gallery-arrow gallery-arrow-prev" type="button" onClick={() => moveImage(-1)} aria-label="Fotografía anterior">‹</button>
+        <button className="gallery-arrow gallery-arrow-next" type="button" onClick={() => moveImage(1)} aria-label="Fotografía siguiente">›</button>
+        <div className="gallery-stage-count"><strong>{currentCount}</strong><span>/ {imageCount}</span></div>
+      </div>
+      <aside className="gallery-side">
+        <div className="gallery-side-copy"><span className="gallery-kicker">Un paso a la vez</span><h3>Disciplina que se vive.<br /><em>Confianza que crece.</em></h3><p>Cada clase es una oportunidad para aprender, esforzarse y celebrar el camino junto al equipo.</p></div>
+        <div className="gallery-progress" role="progressbar" aria-label="Progreso de la galería" aria-valuenow={activeIndex + 1} aria-valuemin="1" aria-valuemax={galleryImages.length}><span style={{ width: progress + '%' }} /></div>
+        <div className="gallery-thumb-heading"><span>Explora los momentos</span><span>{currentCount} / {imageCount}</span></div>
+        <div className="gallery-thumbnails">{visibleThumbnails.map((index) => <button className={index === activeIndex ? 'gallery-thumb active' : 'gallery-thumb'} type="button" key={galleryImages[index].src} onClick={() => setActiveIndex(index)} aria-label={'Mostrar fotografía ' + (index + 1)} aria-current={index === activeIndex ? 'true' : undefined}><img src={galleryImages[index].src} alt="" loading="lazy" /><span>{String(index + 1).padStart(2, '0')}</span></button>)}</div>
+        <button className="gallery-expand" type="button" onClick={() => setShowAll(!showAll)}>{showAll ? 'Ocultar galería completa' : 'Ver todas las fotografías'}<span>{showAll ? '−' : '+'}</span></button>
+      </aside>
+    </div>
+    {showAll && <div className="gallery-all-grid">{galleryImages.map((image, index) => <button className="gallery-all-item" type="button" key={image.src} onClick={() => { setActiveIndex(index); setLightboxOpen(true); }} aria-label={'Abrir fotografía ' + (index + 1)}><img src={image.src} alt={image.alt} loading="lazy" /><span>{String(index + 1).padStart(2, '0')}</span></button>)}</div>}
+    {lightboxOpen && <div className="gallery-lightbox" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setLightboxOpen(false); }}><div className="gallery-lightbox-panel" role="dialog" aria-modal="true" aria-label="Galería de fotografías"><button className="gallery-close" type="button" onClick={() => setLightboxOpen(false)} aria-label="Cerrar galería">×</button><button className="gallery-lightbox-arrow gallery-lightbox-prev" type="button" onClick={() => moveImage(-1)} aria-label="Fotografía anterior">‹</button><img src={activeImage.src} alt={activeImage.alt} /><button className="gallery-lightbox-arrow gallery-lightbox-next" type="button" onClick={() => moveImage(1)} aria-label="Fotografía siguiente">›</button><span className="gallery-lightbox-count">{currentCount} / {imageCount}</span></div></div>}
   </section>;
 }
-
 function EnrollmentModal({ onClose }) {
   const [accepted, setAccepted] = useState(false);
   const enrollmentMessage = 'Hola, he leído y acepto los términos y condiciones del Club Taewoong. Quiero continuar con el proceso de inscripción.';
@@ -192,9 +231,11 @@ function App() {
     'horarios.html': ['horarios', <SchedulePage />],
     'costos.html': ['costos', <FeesPage />],
     'politicas.html': ['politicas', <PoliciesPage />],
+    'aula.html': ['aula', <AulaPage />],
   };
   const [current, page] = routes[filename] || routes['index.html'];
   return <><Header current={current} onEnroll={openEnrollment} />{page}<Footer />{enrollmentOpen && <EnrollmentModal onClose={closeEnrollment} />}</>;
 }
 
 export default App;
+
