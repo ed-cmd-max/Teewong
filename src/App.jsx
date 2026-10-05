@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const navigation = [
   ['Inicio', './index.html', 'home'],
@@ -7,6 +7,7 @@ const navigation = [
   ['Horarios', './horarios.html', 'horarios'],
   ['Costos', './costos.html', 'costos'],
   ['Políticas', './politicas.html', 'politicas'],
+  ['Galería', './index.html#galeria', 'galeria'],
 ];
 
 const classes = [
@@ -27,12 +28,13 @@ const instagramUrl = 'https://www.instagram.com/tae.woong2024/';
 const matrixAddress = 'N71C San José del Condado OE4-374, local 2';
 const matrixMapUrl = 'https://www.google.com/maps/search/?api=1&query=N71C+San+Jose+del+Condado+OE4-374+local+2+Quito';
 const pomasquiMapUrl = 'https://maps.app.goo.gl/dG8jZ2cRKmvSAYSr9';
+const galleryImages = Object.entries(import.meta.glob('../fotos/*.jfif', { eager: true, query: '?url', import: 'default' })).sort(([first], [second]) => first.localeCompare(second)).map(([path, src], index) => ({ src, alt: 'Actividad de Taekwondo en Club Taewoong, foto ' + (index + 1) }));
 
 const experiencePoints = ['Conocer el dojang y al instructor.', 'Integrarse al grupo de su edad y nivel.', 'Experimentar una clase real de Taekwondo.', 'Conocer nuestra metodología y nuestros valores.'];
 const enrollmentIncludes = ['Registro del estudiante.', 'Organización de su ficha deportiva.', 'Ingreso formal al programa de entrenamiento.', 'Orientación inicial a padres y representantes.'];
 const familyCommitments = ['La puntualidad y la asistencia constante.', 'El respeto hacia instructores y compañeros.', 'El cuidado del uniforme y las instalaciones.', 'El cumplimiento de las normas del club.', 'La disciplina dentro y fuera del dojang.'];
 
-function Header({ current }) {
+function Header({ current, onEnroll }) {
   const [menuOpen, setMenuOpen] = useState(false);
   return <>
     <div className="topbar"><span>📍 Matriz: El Condado · Sucursal: Pomasqui</span><span>Clase de experiencia · $2</span></div>
@@ -41,7 +43,7 @@ function Header({ current }) {
       <button className="menu-toggle" type="button" aria-expanded={menuOpen} aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? '×' : '☰'}<span>Menú</span></button>
       <nav className={menuOpen ? 'site-nav nav-open' : 'site-nav'} aria-label="Navegación principal">
         {navigation.map(([label, href, key]) => <a key={key} className={current === key ? 'nav-link active' : 'nav-link'} href={href}>{label}</a>)}
-        <a className="button button-primary nav-cta" href="./costos.html#experiencia" onClick={() => setMenuOpen(false)}>Clase de experiencia · $2</a>
+        <button className="button button-primary nav-cta" type="button" onClick={() => { setMenuOpen(false); onEnroll(); }}>Inscríbete</button>
       </nav>
     </header>
   </>;
@@ -63,16 +65,60 @@ function ScheduleCard({ item }) {
   </article>;
 }
 
-function HomePage() {
+function GallerySection() {
+  const [selectedImage, setSelectedImage] = useState(null);
+  useEffect(() => {
+    if (!selectedImage) return undefined;
+    const closeOnEscape = (event) => { if (event.key === 'Escape') setSelectedImage(null); };
+    document.addEventListener('keydown', closeOnEscape);
+    document.body.classList.add('gallery-open');
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      document.body.classList.remove('gallery-open');
+    };
+  }, [selectedImage]);
+  return <section className="gallery-section" id="galeria">
+    <div className="section-head"><div className="eyebrow">Así entrenamos</div><h2>Momentos Taewoong.</h2><p>Disciplina, compañerismo y crecimiento en cada entrenamiento.</p></div>
+    <div className="gallery-grid">{galleryImages.map((image, index) => <button className="gallery-item" type="button" key={image.src} onClick={() => setSelectedImage(image)} aria-label={'Ampliar fotografía ' + (index + 1)}><img src={image.src} alt={image.alt} loading="lazy" /></button>)}</div>
+    {selectedImage && <div className="gallery-lightbox" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) setSelectedImage(null); }}><div className="gallery-lightbox-panel" role="dialog" aria-modal="true" aria-label="Fotografía ampliada"><button className="gallery-close" type="button" onClick={() => setSelectedImage(null)} aria-label="Cerrar fotografía">×</button><img src={selectedImage.src} alt={selectedImage.alt} /></div></div>}
+  </section>;
+}
+
+function EnrollmentModal({ onClose }) {
+  const [accepted, setAccepted] = useState(false);
+  const enrollmentMessage = 'Hola, he leído y acepto los términos y condiciones del Club Taewoong. Quiero continuar con el proceso de inscripción.';
+  const enrollmentUrl = 'https://wa.me/593997984504?text=' + encodeURIComponent(enrollmentMessage);
+  return <div className="enrollment-backdrop" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <section className="enrollment-modal" role="dialog" aria-modal="true" aria-labelledby="enrollment-title">
+      <button className="enrollment-close" type="button" onClick={onClose} aria-label="Cerrar términos">×</button>
+      <div className="eyebrow">Antes de continuar</div><h2 id="enrollment-title">Términos y condiciones de inscripción</h2>
+      <div className="terms-scroll">
+        <h3>1. Clase de experiencia</h3><p>La clase de experiencia tiene un valor de $2 y permite conocer el dojang, al instructor, el grupo correspondiente y la metodología del club. No garantiza la inscripción.</p>
+        <h3>2. Matrícula y pensión</h3><p>La matrícula es de $10 y se paga una sola vez al ingresar. Si el alumno se retira por más de 6 meses, deberá matricularse nuevamente. La pensión mensual es de $30 y debe cancelarse dentro de los primeros días de cada mes.</p>
+        <h3>3. Asistencia y pagos</h3><p>El proceso formativo requiere una asistencia mínima de 3 días por semana. La pensión reserva el cupo y cubre la planificación mensual; las inasistencias personales no generan descuentos ni devoluciones. Las ausencias prolongadas justificadas podrán evaluarse de manera particular.</p>
+        <h3>4. Uniformes, exámenes y actividades</h3><p>El dobok Taewoong cuesta desde $45, según calidad y talla, y la camiseta oficial cuesta $12. Los exámenes de ascenso tienen un valor independiente. Competencias, seminarios y actividades externas son voluntarios y pueden tener costos adicionales.</p>
+        <h3>5. Beneficios familiares</h3><p>Los beneficios para hermanos, familiares, grupos y alumnos referidos dependen de las condiciones descritas en la página de costos y deben confirmarse con el club al momento de la inscripción.</p>
+        <h3>6. Compromiso de estudiantes y familias</h3><p>La familia acompañará el proceso procurando puntualidad, asistencia constante, respeto a instructores y compañeros, cuidado del uniforme e instalaciones, y cumplimiento de las normas del club.</p>
+        <h3>7. Privacidad y uso de imagen</h3><p>Los datos personales se utilizarán para fines administrativos, deportivos y de comunicación del club. La autorización para publicar imágenes es voluntaria y se solicita por separado. Para menores de edad debe decidir su padre, madre o representante legal. Aceptar estos términos no autoriza el uso de imagen.</p>
+        <p>Revisa también las <a href="./costos.html" target="_blank" rel="noreferrer">condiciones y tarifas</a> y la <a href="./politicas.html" target="_blank" rel="noreferrer">política de privacidad</a>.</p>
+      </div>
+      <label className="terms-accept"><input type="checkbox" checked={accepted} onChange={(event) => setAccepted(event.target.checked)} /><span>He leído y acepto los términos y condiciones de inscripción del Club Taewoong.</span></label>
+      <p className="terms-separate-consent">El uso de imagen requiere una autorización independiente; esta casilla no la concede.</p>
+      <div className="enrollment-actions"><button className="button button-outline-dark" type="button" onClick={onClose}>Volver</button><a className={accepted ? 'button button-primary' : 'button button-disabled'} href={accepted ? enrollmentUrl : undefined} target={accepted ? '_blank' : undefined} rel={accepted ? 'noreferrer' : undefined} aria-disabled={!accepted} onClick={(event) => { if (!accepted) event.preventDefault(); }}>Aceptar y continuar por WhatsApp</a></div>
+    </section>
+  </div>;
+}
+function HomePage({ onEnroll }) {
   return <>
     <section className="hero home-hero">
-      <div className="hero-copy"><div className="eyebrow">Disciplina · Perseverancia · Integridad</div><h1>Más que un deporte,<br /><em>un estilo de vida.</em></h1><p>Taekwondo para niñas, niños, jóvenes y adultos. Aprende, mejora tu condición física y gana confianza paso a paso, en un ambiente seguro y respetuoso.</p><div className="actions"><a className="button button-primary" href="./costos.html#experiencia">Agenda tu clase de experiencia · $2</a><a className="button button-outline" href="./programas.html">Conoce los programas</a></div></div>
+      <div className="hero-copy"><div className="eyebrow">Disciplina · Perseverancia · Integridad</div><h1>Más que un deporte,<br /><em>un estilo de vida.</em></h1><p>Taekwondo para niñas, niños, jóvenes y adultos. Aprende, mejora tu condición física y gana confianza paso a paso, en un ambiente seguro y respetuoso.</p><div className="actions"><a className="button button-primary" href="./costos.html#experiencia">Agenda tu clase de experiencia · $2</a><a className="button button-outline" href="./programas.html">Conoce los programas</a><button className="button button-primary" type="button" onClick={onEnroll}>Inscríbete</button></div></div>
       <div className="hero-badge"><img className="hero-logo" src="/taekwondo-logo.png" alt="TAE WOONG, Club Especializado Formativo de Taekwondo" /></div>
     </section>
     <div className="trust"><span>🥋 Grupos por edad y nivel</span><span>📍 Matriz: El Condado · Sucursal: Pomasqui</span><span>⭐ Clase de experiencia · $2</span></div>
     <section className="locations-section" id="sedes"><div className="locations-heading"><div className="eyebrow">Encuéntranos en Quito</div><h2>Dos sedes, el mismo propósito.</h2><p>Elige la sede y consulta cómo llegar. Los horarios publicados corresponden a Pomasqui.</p></div><div className="locations-grid"><article className="location-card"><span className="location-kind">Matriz</span><h3>El Condado</h3><p>{matrixAddress} · Quito</p><a className="button button-outline-dark" href={matrixMapUrl} target="_blank" rel="noreferrer">Ver ubicación en Google Maps ↗</a></article><article className="location-card location-card-featured"><span className="location-kind">Sucursal</span><h3>Pomasqui</h3><p>Consulta el pin de la sucursal y encuentra la ruta en el mapa.</p><a className="button button-red" href={pomasquiMapUrl} target="_blank" rel="noreferrer">Cómo llegar a Pomasqui ↗</a></article></div><div className="locations-contact"><span>¿Tienes dudas sobre sedes, clases o inscripción?</span><div className="social-links"><a className="text-link" href={whatsappUrl} target="_blank" rel="noreferrer">Escríbenos por WhatsApp <span>→</span></a><a className="text-link" href={instagramUrl} target="_blank" rel="noreferrer">Síguenos en Instagram <span>↗</span></a></div></div></section>
     <section className="home-welcome"><div className="home-welcome-copy"><div className="eyebrow">Desde 2022 · Quito</div><h2>Un camino para crecer y descubrir de lo que eres capaz.</h2><p>Conoce la historia de la Maestra Patricia Túqueres y el propósito que guía al Club Taewoong: formar personas dentro y fuera del dojang.</p><a className="text-link" href="./club.html">Conoce el club <span>→</span></a></div><div className="home-shortcuts"><a href="./programas.html"><span>01</span><strong>Programas</strong><small>Entrenamiento para cada etapa</small></a><a href="./horarios.html"><span>02</span><strong>Horarios</strong><small>Encuentra tu grupo y nivel</small></a><a href="./costos.html"><span>03</span><strong>Inscripción</strong><small>Costos, uniforme y beneficios</small></a></div></section>
-    <section className="home-cta"><div><div className="eyebrow">El primer paso</div><h2>Tu formación comienza aquí.</h2></div><a className="button button-primary" href="./horarios.html">Ver horarios</a></section>
+    <GallerySection />
+    <section className="home-cta"><div><div className="eyebrow">El primer paso</div><h2>Tu formación comienza aquí.</h2></div><div className="actions"><a className="button button-outline-dark" href="./horarios.html">Ver horarios</a><button className="button button-primary" type="button" onClick={onEnroll}>Inscríbete</button></div></section>
   </>;
 }
 
@@ -135,9 +181,12 @@ function PoliciesPage() {
 }
 
 function App() {
+  const [enrollmentOpen, setEnrollmentOpen] = useState(false);
+  const openEnrollment = () => setEnrollmentOpen(true);
+  const closeEnrollment = () => setEnrollmentOpen(false);
   const filename = window.location.pathname.split('/').pop() || 'index.html';
   const routes = {
-    'index.html': ['home', <HomePage />],
+    'index.html': ['home', <HomePage onEnroll={openEnrollment} />],
     'club.html': ['club', <ClubPage />],
     'programas.html': ['programas', <ProgramsPage />],
     'horarios.html': ['horarios', <SchedulePage />],
@@ -145,7 +194,7 @@ function App() {
     'politicas.html': ['politicas', <PoliciesPage />],
   };
   const [current, page] = routes[filename] || routes['index.html'];
-  return <><Header current={current} />{page}<Footer /></>;
+  return <><Header current={current} onEnroll={openEnrollment} />{page}<Footer />{enrollmentOpen && <EnrollmentModal onClose={closeEnrollment} />}</>;
 }
 
 export default App;

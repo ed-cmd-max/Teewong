@@ -165,3 +165,32 @@ footer{align-items:center}footer a:hover{color:#8bc8ff}
   .fees-section .benefits-grid{grid-template-columns:1fr}
 }
 @media(max-width:520px){.home-cta{align-items:flex-start;flex-direction:column}.home-cta .button{width:100%}.page-intro{margin-bottom:32px}}
+
+/* Photo gallery and enrollment terms gate */
+button.button{font-family:inherit;cursor:pointer}
+.gallery-section{background:#f2f6fb}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.gallery-item{padding:0;border:0;border-radius:12px;overflow:hidden;background:#d8e3ef;aspect-ratio:1.28;cursor:zoom-in;box-shadow:0 8px 22px #172b4614;transition:transform .2s,box-shadow .2s}
+.gallery-item:hover{transform:translateY(-3px);box-shadow:0 14px 28px #172b4626}
+.gallery-item img{display:block;width:100%;height:100%;object-fit:cover}
+.gallery-lightbox{position:fixed;inset:0;z-index:120;background:#050b16e8;display:grid;place-items:center;padding:24px}
+.gallery-lightbox-panel{position:relative;display:grid;place-items:center;width:min(1100px,100%);height:min(88vh,850px)}
+.gallery-lightbox-panel>img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px}
+.gallery-close,.enrollment-close{position:absolute;right:8px;top:8px;width:42px;height:42px;border:0;border-radius:50%;background:#fff;color:#172033;font-size:28px;line-height:1;cursor:pointer}
+.gallery-open{overflow:hidden}
+.enrollment-backdrop{position:fixed;inset:0;z-index:110;background:#07101ed9;display:grid;place-items:center;padding:16px}
+.enrollment-modal{position:relative;width:min(760px,100%);max-height:min(92vh,900px);overflow:hidden;display:flex;flex-direction:column;background:#fff;border-radius:16px;padding:32px;box-shadow:0 24px 80px #0006}
+.enrollment-modal>.eyebrow{padding-right:48px}
+.enrollment-modal>h2{font-size:clamp(26px,4vw,36px);line-height:1.1;padding-right:32px;margin:10px 0 18px}
+.enrollment-close{right:18px;top:18px;background:#eef2f7}
+.terms-scroll{overflow-y:auto;overscroll-behavior:contain;padding:2px 12px 6px 0;color:#526176;line-height:1.6}
+.terms-scroll h3{color:#172033;font-size:16px;margin:16px 0 4px}
+.terms-scroll p{font-size:14px;margin:4px 0 10px}
+.terms-scroll a{color:#2674b8;text-decoration:underline;font-weight:700}
+.terms-accept{display:flex;align-items:flex-start;gap:11px;margin-top:16px;padding:14px;background:#f1f6fb;border-radius:9px;color:#1c2c42;font-size:14px;font-weight:750;line-height:1.45;cursor:pointer}
+.terms-accept input{width:18px;height:18px;flex:0 0 18px;margin:1px 0 0;accent-color:#236fae}
+.terms-separate-consent{color:#66768c;font-size:12px;margin:8px 0 0}
+.enrollment-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.button-disabled{display:inline-flex;align-items:center;justify-content:center;border-radius:5px;padding:13px 19px;background:#d8dee8;color:#758094;font-size:14px;font-weight:800;cursor:not-allowed}
+@media(max-width:760px){.gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.gallery-item{border-radius:9px}.enrollment-modal{padding:24px 20px}.terms-scroll{max-height:48vh}.enrollment-actions{flex-direction:column-reverse}.enrollment-actions .button,.enrollment-actions .button-disabled{width:100%}}
+@media(max-width:420px){.gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.gallery-lightbox{padding:12px}.enrollment-modal{max-height:94vh;padding:22px 17px}.terms-scroll{max-height:45vh}}
