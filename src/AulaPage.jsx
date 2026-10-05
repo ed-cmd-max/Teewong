@@ -29,7 +29,17 @@ function StudentCreator({ onCreated }) {
         body: { ...form, cedula: form.cedula.replace(/\D/g, '') },
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      if (invokeError || data?.error) throw new Error(data?.error || 'No se pudo crear la cuenta.');
+      if (invokeError) {
+        let detail = invokeError.message || 'La función de Supabase rechazó la solicitud.';
+        if (invokeError.context instanceof Response) {
+          try {
+            const payload = await invokeError.context.clone().json();
+            if (typeof payload?.error === 'string') detail = payload.error;
+          } catch { /* Keep the original Functions error when the response is not JSON. */ }
+        }
+        throw new Error(detail);
+      }
+      if (data?.error) throw new Error(data.error);
       setMessage(`Cuenta creada para ${data.full_name}. Entrega al representante la cédula como usuario y la contraseña inicial de forma privada.`);
       setForm({ full_name: '', cedula: '', level: 'principiantes', password: '' });
       onCreated();
