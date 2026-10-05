@@ -29,14 +29,11 @@ Supabase inyecta `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KE
 La función comprueba que quien la llama tenga perfil `instructor` y crea cuentas como estudiantes; nunca acepta el rol desde el navegador.
 ## 3. Conectar el sitio
 
-En Netlify → Site configuration → Environment variables, agrega:
+La URL y la publishable key de Supabase ya están declaradas en `netlify.toml`; son valores públicos necesarios en el frontend. La publishable key está diseñada para el navegador, mientras que una secret/service-role key nunca debe aparecer en el sitio ni en Git.
 
-- `VITE_SUPABASE_URL`: Project URL de Supabase.
-- `VITE_SUPABASE_PUBLISHABLE_KEY`: anon/publishable key del proyecto.
+Para desarrollo local, copia `.env.example` como `.env.local` y completa los mismos valores. El ignore de Git excluye los archivos `.env*` excepto el ejemplo vacío.
 
-Para desarrollo local, copia `.env.example` como `.env.local` y completa esos dos valores. El ignore de Git ya excluye archivos `.env*` excepto el ejemplo vacío.
-
-Como Vite incluye estas dos variables públicas durante la compilación, configura Netlify para desplegar desde el repositorio con comando `npm run build` y carpeta `dist`, o compila localmente con `.env.local` y despliega el contenido de `dist`. Agregar las variables en Netlify no cambia un ZIP o sitio ya publicado hasta crear un nuevo deploy. La ruta es `/aula.html` y el enlace ya aparece en el menú y el pie de página.
+Conecta el sitio de Netlify al repositorio `ed-cmd-max/Teewong` y a la rama `master`; el comando `npm run build` y la carpeta `dist` ya están configurados. La ruta es `/aula.html` y el enlace aparece en el menú y el pie de página.
 
 ## Privacidad y capacidades
 
@@ -48,6 +45,7 @@ Como Vite incluye estas dos variables públicas durante la compilación, configu
 - Las reglas de acceso están en la migración SQL y Storage RLS; no dependen de ocultar pantallas.
 
 No cargues cédulas reales ni información de alumnos hasta que la función esté desplegada, exista una cuenta inicial de instructor y se hayan comprobado los permisos RLS.
+
 
 
 
