@@ -51,5 +51,19 @@ Deno.serve(async (request) => {
     user_metadata: { full_name: fullName, cedula, level },
   });
   if (error) return response({ error: error.message.includes('already') ? 'Ya existe una cuenta con esa cédula.' : 'No se pudo crear la cuenta del estudiante.' }, 400);
+
+  // Keep the profile complete even if the auth.users trigger is missing or has older logic.
+  const { error: profileError } = await adminClient.from('profiles').upsert({
+    id: data.user.id,
+    role: 'student',
+    full_name: fullName,
+    cedula,
+    level: String(level),
+  }, { onConflict: 'id' });
+  if (profileError) {
+    await adminClient.auth.admin.deleteUser(data.user.id);
+    return response({ error: 'La cuenta se creó, pero no se pudieron guardar los datos del estudiante. Revisa la migración de perfiles.' }, 500);
+  }
+
   return response({ user_id: data.user.id, full_name: fullName, cedula, level });
 });
