@@ -308,3 +308,34 @@ button.button{font-family:inherit;cursor:pointer}
 .club-signature{font-weight:800;color:#c9d9eb!important;font-size:14px!important}
 @media(max-width:780px){.home-story-heading{align-items:flex-start;flex-direction:column;gap:14px}.home-story-grid,.home-purpose-grid,.club-timeline{grid-template-columns:1fr}.home-story-lead{min-height:unset}.home-story-timeline{gap:0}.club-timeline{margin-bottom:28px}}
 @media(max-width:520px){.home-story-section{padding:56px 6vw}.home-story-heading h2{font-size:34px}.home-story-timeline article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:15px 0}.home-purpose-grid article{padding:22px}.club-timeline article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:19px}}
+.student-profile-editor-grid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:26px;align-items:start}
+.student-profile-photo-column{display:grid;justify-items:center;gap:13px;padding:20px;background:#f6f9fc;border:1px solid #e2ebf3;border-radius:12px}
+.student-profile-photo{width:150px;height:180px;object-fit:cover;border-radius:10px;background:#e5f1fc;color:#4387c8}
+.classroom-photo-fallback{display:grid;place-items:center;font-size:45px;font-weight:900}
+.student-profile-photo-column .classroom-file-label{width:100%;font-size:11px}
+.student-profile-photo-column input[type=file]{padding:8px;font-size:11px}
+.student-profile-photo-column .classroom-file-label small{display:block;margin-top:6px;line-height:1.4}
+.student-photo-remove{border:0;background:transparent;color:#9b3530;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
+.student-profile-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+.student-profile-save{grid-column:1/-1}
+.student-profile-form>.classroom-success,.student-profile-form>.classroom-error{grid-column:1/-1;margin:0}
+.classroom-roster-selected{border-color:#7caed8!important;box-shadow:0 0 0 2px #4387c818}
+.student-roster-open{justify-self:end;border:1px solid #c8dced;border-radius:7px;background:#fff;color:#347fbd;padding:9px 11px;font:inherit;font-size:10px;font-weight:850;cursor:pointer;white-space:nowrap}
+.student-roster-open:hover{background:#eaf4fc}
+.student-welcome-person{display:flex;align-items:center;gap:18px}
+.student-self-photo{width:76px;height:76px;flex:none;border-radius:50%;object-fit:cover;background:#e5f1fc;color:#4387c8}
+.student-self-photo.classroom-photo-fallback{font-size:25px}
+.student-member-details{padding-block:22px}
+.student-member-details .classroom-panel-heading{margin-bottom:14px}
+.student-member-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.student-member-grid>div{display:grid;gap:6px;padding:13px;border-radius:8px;background:#f6f9fc}
+.student-member-grid small{font-size:10px;color:#74869b}
+.student-member-grid strong{font-size:12px;color:#294765;overflow-wrap:anywhere}
+.student-profile-history{display:grid;grid-template-columns:minmax(180px,.45fr) 1fr;gap:22px;margin-top:26px;padding-top:24px;border-top:1px solid #e7eef5}
+.student-profile-history h3{margin:7px 0;color:#24435f;font-size:18px}
+.student-profile-history .classroom-empty{align-self:start}
+.student-profile-history .student-timeline{max-height:360px;overflow:auto;padding:3px 8px 3px 3px}
+.student-profile-history .student-timeline h4{color:#24435f;font-size:13px;margin:5px 0}
+@media(max-width:900px){.student-profile-editor-grid{grid-template-columns:175px minmax(0,1fr);gap:18px}.student-member-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.student-roster-open{grid-column:2/-1;justify-self:start}}
+@media(max-width:700px){.student-profile-editor-grid{grid-template-columns:1fr}.student-profile-photo-column{max-width:280px;width:100%;justify-self:center}.student-profile-form{grid-template-columns:1fr}.student-profile-save,.student-profile-form>.classroom-success,.student-profile-form>.classroom-error{grid-column:auto}.student-profile-history{grid-template-columns:1fr;gap:10px}.student-welcome-person{align-items:flex-start}.student-self-photo{width:60px;height:60px}.student-member-grid{grid-template-columns:1fr 1fr}.student-roster-open{grid-column:2/-1}.classroom-roster article{grid-template-columns:36px minmax(0,1fr);align-items:start}.classroom-roster article>div{min-width:0;overflow-wrap:anywhere}}
+@media(max-width:420px){.student-member-grid{grid-template-columns:1fr}.student-welcome-person{gap:12px}}
