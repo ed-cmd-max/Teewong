@@ -7,7 +7,7 @@ El aula está integrada al sitio, pero necesita un proyecto de Supabase para gua
 1. Crea un proyecto para Club Taewoong. La URL y publishable key se usan en el navegador; la clave secreta de servidor nunca se pega en el sitio.
 2. En Supabase → SQL Editor, ejecuta el contenido de `supabase/migrations/20261004000000_virtual_classroom.sql`.
 3. Para añadir fichas individuales, en el mismo SQL Editor ejecuta también `supabase/migrations/20261006000000_student_profiles.sql`. Esta actualización agrega los datos de contacto, sede, nacimiento y una foto privada por estudiante.
-4. Para completar la ficha deportiva, ejecuta además `supabase/migrations/20261007000000_complete_student_dossier.sql`. Agrega antecedentes deportivos, evaluaciones, objetivos, competencias, grados y seguimiento del entrenador.
+4. Para completar la ficha deportiva, ejecuta además `supabase/migrations/20261007000000_complete_student_dossier.sql`. Agrega antecedentes deportivos, evaluaciones, objetivos, competencias, grados y seguimiento del entrenador. Ejecuta después `supabase/migrations/20261007000001_complete_dossier_details.sql` para guardar por separado el grado Kup y el rango Poom/Dan.
 5. En Authentication → Sign In / Providers, desactiva el registro público por correo. Las cuentas las crea el instructor desde el aula.
 6. En Authentication → Users, agrega la primera cuenta del instructor con este correo interno, donde los dígitos son su cédula: `0100000000@login.taewoong.invalid`. Establece una contraseña segura y confirma el usuario. Ese correo es solo un identificador interno; no se usa para enviar mensajes.
 7. En SQL Editor, asigna el rol al usuario inicial (reemplaza nombre y cédula):
