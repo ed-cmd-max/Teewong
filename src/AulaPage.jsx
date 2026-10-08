@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { classroomLevels, levelLabel, supabase } from './lib/supabase.js';
+import StudentDossierEditor from './StudentDossierEditor.jsx';
 
 const levelId = (id) => classroomLevels.some((level) => level.id === id) ? id : classroomLevels[0].id;
 const dateLabel = (value) => new Intl.DateTimeFormat('es-EC', { dateStyle: 'medium' }).format(new Date(value));
 const dateOnlyLabel = (value) => value ? new Intl.DateTimeFormat('es-EC', { dateStyle: 'medium' }).format(new Date(`${value}T12:00:00`)) : 'Por registrar';
 
 function ConfigNotice() {
-  return <main className="classroom-shell"><section className="classroom-config"><div className="eyebrow">Aula virtual · TAEWOONG</div><h1>El espacio de aprendizaje<br />de cada deportista.</h1><p>El aula ya está integrada al sitio. Para activar el acceso seguro hay que crear el proyecto Supabase, aplicar las migraciones y configurar las variables de entorno de Netlify.</p><ol><li>Crear el proyecto Supabase para Taewoong.</li><li>Ejecutar las migraciones <code>20261004000000_virtual_classroom.sql</code> y <code>20261006000000_student_profiles.sql</code> en SQL Editor.</li><li>Configurar <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> en Netlify.</li><li>Publicar la función segura para crear cuentas y registrar al instructor.</li></ol><p className="classroom-privacy-note">Las contraseñas y avances no se guardan en este navegador. El aula se habilita cuando el backend quede conectado.</p></section></main>;
+  return <main className="classroom-shell"><section className="classroom-config"><div className="eyebrow">Aula virtual · TAEWOONG</div><h1>El espacio de aprendizaje<br />de cada deportista.</h1><p>El aula ya está integrada al sitio. Para activar el acceso seguro hay que crear el proyecto Supabase, aplicar las migraciones y configurar las variables de entorno de Netlify.</p><ol><li>Crear el proyecto Supabase para Taewoong.</li><li>Ejecutar las migraciones <code>20261004000000_virtual_classroom.sql</code>, <code>20261006000000_student_profiles.sql</code> y <code>20261007000000_complete_student_dossier.sql</code> en SQL Editor.</li><li>Configurar <code>VITE_SUPABASE_URL</code> y <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> en Netlify.</li><li>Publicar la función segura para crear cuentas y registrar al instructor.</li></ol><p className="classroom-privacy-note">Las contraseñas y avances no se guardan en este navegador. El aula se habilita cuando el backend quede conectado.</p></section></main>;
 }
 
 function Login({ onLogin, error, busy }) {
@@ -30,82 +31,6 @@ function StudentPhoto({ path, name, className = '' }) {
   return url
     ? <img className={className} src={url} alt={`Foto de ${name}`} />
     : <span className={`${className} classroom-photo-fallback`} aria-label={`Sin foto de ${name}`}>{name?.trim()?.slice(0, 1)?.toUpperCase() || '?'}</span>;
-}
-
-function StudentProfileEditor({ student, progressEntries, onSaved }) {
-  const [form, setForm] = useState({});
-  const [photoFile, setPhotoFile] = useState(null);
-  const [removePhoto, setRemovePhoto] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState('');
-  const photoPreview = useMemo(() => photoFile ? URL.createObjectURL(photoFile) : '', [photoFile]);
-
-  useEffect(() => () => { if (photoPreview) URL.revokeObjectURL(photoPreview); }, [photoPreview]);
-
-  useEffect(() => {
-    if (!student) { setForm({}); setPhotoFile(null); setRemovePhoto(false); return; }
-    setForm({
-      full_name: student.full_name || '',
-      date_of_birth: student.date_of_birth || '',
-      phone: student.phone || '',
-      guardian_name: student.guardian_name || '',
-      guardian_phone: student.guardian_phone || '',
-      emergency_contact_name: student.emergency_contact_name || '',
-      emergency_contact_phone: student.emergency_contact_phone || '',
-      level: levelId(student.level),
-      belt_rank: student.belt_rank || '',
-      branch: student.branch || '',
-    });
-    setPhotoFile(null);
-    setRemovePhoto(false);
-    setFeedback('');
-  }, [student?.id]);
-
-  const update = (key, value) => setForm((previous) => ({ ...previous, [key]: value }));
-  const submit = async (event) => {
-    event.preventDefault();
-    if (!student || !form.full_name?.trim()) return;
-    if (photoFile && (!['image/jpeg', 'image/png', 'image/webp'].includes(photoFile.type) || photoFile.size > 5 * 1024 * 1024)) {
-      setFeedback('La foto debe ser JPG, PNG o WebP y pesar máximo 5 MB.');
-      return;
-    }
-    setBusy(true); setFeedback('');
-    let nextPhotoPath = removePhoto ? null : student.profile_photo_path;
-    let uploadedPhotoPath = '';
-    if (photoFile) {
-      const extension = photoFile.type === 'image/png' ? 'png' : photoFile.type === 'image/webp' ? 'webp' : 'jpg';
-      uploadedPhotoPath = `${student.id}/${crypto.randomUUID()}.${extension}`;
-      const { error: uploadError } = await supabase.storage.from('student-photos').upload(uploadedPhotoPath, photoFile, { contentType: photoFile.type, upsert: false });
-      if (uploadError) { setBusy(false); setFeedback(`No se pudo subir la foto. ${uploadError.message}`); return; }
-      nextPhotoPath = uploadedPhotoPath;
-    }
-    const { error } = await supabase.from('profiles').update({
-      full_name: form.full_name.trim(),
-      date_of_birth: form.date_of_birth || null,
-      phone: form.phone.trim() || null,
-      guardian_name: form.guardian_name.trim() || null,
-      guardian_phone: form.guardian_phone.trim() || null,
-      emergency_contact_name: form.emergency_contact_name.trim() || null,
-      emergency_contact_phone: form.emergency_contact_phone.trim() || null,
-      level: form.level,
-      belt_rank: form.belt_rank.trim() || null,
-      branch: form.branch || null,
-      profile_photo_path: nextPhotoPath,
-      updated_at: new Date().toISOString(),
-    }).eq('id', student.id).eq('role', 'student');
-    if (error) {
-      if (uploadedPhotoPath) await supabase.storage.from('student-photos').remove([uploadedPhotoPath]);
-      setFeedback(`No se pudo guardar la ficha. ${error.message}`);
-      setBusy(false);
-      return;
-    }
-    if ((photoFile || removePhoto) && student.profile_photo_path) {
-      await supabase.storage.from('student-photos').remove([student.profile_photo_path]);
-    }
-    setBusy(false); setFeedback('Ficha del estudiante guardada.'); setPhotoFile(null); setRemovePhoto(false); onSaved();
-  };
-
-  return <section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Ficha individual</span><h2>{student ? student.full_name : 'Selecciona un estudiante'}</h2><p>Datos de contacto, sede, nivel, cinturón y fotografía.</p></div></div>{!student ? <div className="classroom-empty">Crea una cuenta de estudiante o selecciónala de la lista para completar su ficha.</div> : <><div className="student-profile-editor-grid"><div className="student-profile-photo-column">{photoPreview ? <img className="student-profile-photo" src={photoPreview} alt="Vista previa de la foto seleccionada" /> : <StudentPhoto path={removePhoto ? '' : student.profile_photo_path} name={student.full_name} className="student-profile-photo" />}<label className="student-photo-picker"><span className="student-photo-picker-action">{photoFile ? 'Cambiar fotografía' : 'Elegir fotografía'}</span><span className="student-photo-picker-name">{photoFile?.name || (student.profile_photo_path && !removePhoto ? 'Foto cargada' : 'Sin foto seleccionada')}</span><small>JPG, PNG o WebP · máximo 5 MB</small><input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Seleccionar foto del estudiante" onChange={(event) => { setPhotoFile(event.target.files?.[0] || null); setRemovePhoto(false); }} /></label>{student.profile_photo_path && <button className="student-photo-remove" type="button" onClick={() => { setPhotoFile(null); setRemovePhoto(true); }}>Quitar foto</button>}</div><form className="classroom-form classroom-grid-form student-profile-form" onSubmit={submit}><label>Nombre completo<input value={form.full_name || ''} onChange={(event) => update('full_name', event.target.value)} required minLength="3" /></label><label>Cédula<input value={student.cedula || ''} readOnly /></label><label>Fecha de nacimiento<input type="date" value={form.date_of_birth || ''} max={new Date().toISOString().slice(0, 10)} onChange={(event) => update('date_of_birth', event.target.value)} /></label><label>Teléfono del estudiante<input type="tel" value={form.phone || ''} onChange={(event) => update('phone', event.target.value)} placeholder="Número de contacto" /></label><label>Madre, padre o representante<input value={form.guardian_name || ''} onChange={(event) => update('guardian_name', event.target.value)} /></label><label>Teléfono del representante<input type="tel" value={form.guardian_phone || ''} onChange={(event) => update('guardian_phone', event.target.value)} /></label><label>Contacto de emergencia<input value={form.emergency_contact_name || ''} onChange={(event) => update('emergency_contact_name', event.target.value)} /></label><label>Teléfono de emergencia<input type="tel" value={form.emergency_contact_phone || ''} onChange={(event) => update('emergency_contact_phone', event.target.value)} /></label><label>Sede<select value={form.branch || ''} onChange={(event) => update('branch', event.target.value)}><option value="">Seleccionar sede</option><option value="el_condado">Matriz · El Condado</option><option value="pomasqui">Sucursal · Pomasqui</option></select></label><label>Nivel<select value={form.level || classroomLevels[0].id} onChange={(event) => update('level', event.target.value)}>{classroomLevels.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><label>Cinturón / grado actual<input value={form.belt_rank || ''} onChange={(event) => update('belt_rank', event.target.value)} placeholder="Ej.: Blanco punta amarilla" /></label><button className="button button-primary classroom-submit student-profile-save" disabled={busy}>{busy ? 'Guardando ficha…' : 'Guardar ficha'} <span>→</span></button>{feedback && <p className={feedback.includes('guardada') ? 'classroom-success' : 'classroom-error'} role="status">{feedback}</p>}</form></div><div className="student-profile-history"><div><span className="eyebrow">Seguimiento formativo</span><h3>Historial de avances</h3></div>{progressEntries.length ? <div className="student-timeline">{progressEntries.map((entry) => <article key={entry.id}><span className="student-timeline-dot"/><small>{dateLabel(entry.created_at)}</small><h4>{entry.title}</h4><p>{entry.details}</p></article>)}</div> : <div className="classroom-empty">Aún no hay avances registrados para este estudiante.</div>}</div></>}</section>;
 }
 
 function StudentCreator({ onCreated }) {
@@ -201,10 +126,10 @@ function MaterialPublisher({ onPublished }) {
 }
 
 function InstructorDashboard({ profile, onSignOut }) {
-  const [students, setStudents] = useState([]); const [entries, setEntries] = useState([]); const [progressHistory, setProgressHistory] = useState([]); const [materials, setMaterials] = useState([]); const [error, setError] = useState(''); const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [students, setStudents] = useState([]); const [entries, setEntries] = useState([]); const [progressHistory, setProgressHistory] = useState([]); const [materials, setMaterials] = useState([]); const [error, setError] = useState(''); const [selectedStudentId, setSelectedStudentId] = useState(''); const [activeArea, setActiveArea] = useState('students');
   const refresh = useCallback(async () => {
     const [studentResult, entryResult, materialResult] = await Promise.all([
-      supabase.from('profiles').select('id,full_name,cedula,level,belt_rank,created_at,date_of_birth,phone,guardian_name,guardian_phone,emergency_contact_name,emergency_contact_phone,branch,profile_photo_path').eq('role', 'student').order('full_name'),
+      supabase.from('profiles').select('*').eq('role', 'student').order('full_name'),
       supabase.from('progress_entries').select('id,student_id,title,details,created_at').order('created_at', { ascending: false }).limit(8),
       supabase.from('study_materials').select('id,title,level,created_at,original_name').order('created_at', { ascending: false }).limit(8),
     ]);
@@ -219,9 +144,12 @@ function InstructorDashboard({ profile, onSignOut }) {
   useEffect(() => { refresh(); }, [refresh]);
   const studentById = useMemo(() => Object.fromEntries(students.map((student) => [student.id, student])), [students]);
   const selectedStudent = students.find((student) => student.id === selectedStudentId) || null;
-  return <main className="classroom-shell"><div className="classroom-dashboard"><div className="classroom-dashboard-top"><div><span className="eyebrow">Aula virtual · Panel de instructor</span><h1>Bienvenida, {profile.full_name.split(' ')[0]}.</h1><p>Administra cuentas, acompaña el progreso y comparte recursos.</p></div><button className="classroom-signout" onClick={onSignOut}>Cerrar sesión ↗</button></div>{error && <p className="classroom-error" role="alert">{error}</p>}<div className="classroom-stats"><article><span>Estudiantes activos</span><strong>{students.length}</strong></article><article><span>Avances recientes</span><strong>{entries.length}</strong></article><article><span>Materiales publicados</span><strong>{materials.length}</strong></article></div><StudentCreator onCreated={refresh} /><ProgressEditor students={students} onSaved={refresh} /><MaterialPublisher onPublished={refresh} /><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Tu grupo</span><h2>Estudiantes</h2><p>Selecciona un perfil para abrir su ficha y completar sus datos.</p></div></div>{students.length ? <div className="classroom-roster">{students.map((student) => <article className={student.id === selectedStudentId ? 'classroom-roster-selected' : ''} key={student.id}><span className="classroom-roster-initial">{student.full_name.slice(0, 1).toUpperCase()}</span><div><strong>{student.full_name}</strong><small>Cédula · {student.cedula}</small></div><span className="classroom-level-chip">{levelLabel(student.level)}</span><span className="classroom-belt">{student.belt_rank || 'Cinturón sin registrar'}</span><button className="student-roster-open" type="button" onClick={() => setSelectedStudentId(student.id)}>{student.id === selectedStudentId ? 'Ficha abierta' : 'Abrir ficha →'}</button></article>)}</div> : <div className="classroom-empty">Aún no hay cuentas. Puedes crear la primera arriba.</div>}</section><StudentProfileEditor student={selectedStudent} progressEntries={progressHistory} onSaved={refresh} /><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Actividad del aula</span><h2>Últimos avances y materiales</h2></div></div><div className="classroom-recent-grid"><div><h3>Avances</h3>{entries.length ? entries.slice(0, 5).map((entry) => <article className="classroom-recent-item" key={entry.id}><span>{dateLabel(entry.created_at)}</span><strong>{entry.title}</strong><small>{studentById[entry.student_id]?.full_name || 'Estudiante'}</small></article>) : <p className="classroom-muted">Todavía no hay avances registrados.</p>}</div><div><h3>Material publicado</h3>{materials.length ? materials.slice(0, 5).map((material) => <article className="classroom-recent-item" key={material.id}><span>{dateLabel(material.created_at)} · {levelLabel(material.level)}</span><strong>{material.title}</strong><small>{material.original_name}</small></article>) : <p className="classroom-muted">Todavía no hay materiales.</p>}</div></div></section></div></main>;
+  const areas = [
+    ['students', 'Estudiantes', '01'], ['dossier', 'Ficha deportiva', '02'],
+    ['progress', 'Seguimiento', '03'], ['materials', 'Materiales', '04'],
+  ];
+  return <main className="classroom-shell"><div className="classroom-dashboard"><div className="classroom-dashboard-top"><div><span className="eyebrow">Aula virtual · Panel de instructor</span><h1>Bienvenida, {profile.full_name.split(' ')[0]}.</h1><p>Administra fichas, acompaña el progreso y comparte recursos.</p></div><button className="classroom-signout" onClick={onSignOut}>Cerrar sesión ↗</button></div>{error && <p className="classroom-error" role="alert">{error}</p>}<div className="classroom-stats"><article><span>Estudiantes activos</span><strong>{students.length}</strong></article><article><span>Avances recientes</span><strong>{entries.length}</strong></article><article><span>Materiales publicados</span><strong>{materials.length}</strong></article></div><nav className="instructor-area-tabs" role="tablist" aria-label="Secciones del panel de instructor">{areas.map(([id, label, number]) => <button type="button" role="tab" aria-selected={activeArea === id} className={activeArea === id ? 'instructor-area-active' : ''} key={id} onClick={() => setActiveArea(id)}><span>{number}</span>{label}<b>{id === 'students' || id === 'dossier' ? students.length : id === 'progress' ? entries.length : materials.length}</b></button>)}</nav>{activeArea === 'students' && <div className="instructor-area-content"><StudentCreator onCreated={refresh} /><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Tu grupo</span><h2>Estudiantes</h2><p>Elige un deportista para crear o actualizar su ficha.</p></div></div>{students.length ? <div className="classroom-roster">{students.map((student) => <article className={student.id === selectedStudentId ? 'classroom-roster-selected' : ''} key={student.id}><span className="classroom-roster-initial">{student.full_name.slice(0, 1).toUpperCase()}</span><div><strong>{student.full_name}</strong><small>Cédula · {student.cedula}</small></div><span className="classroom-level-chip">{levelLabel(student.level)}</span><span className="classroom-belt">{student.belt_rank || 'Cinturón sin registrar'}</span><button className="student-roster-open" type="button" onClick={() => { setSelectedStudentId(student.id); setActiveArea('dossier'); }}>Abrir ficha →</button></article>)}</div> : <div className="classroom-empty">Aún no hay cuentas. Crea una para comenzar su ficha deportiva.</div>}</section></div>}{activeArea === 'dossier' && <div className="instructor-area-content"><section className="classroom-panel dossier-picker"><div className="classroom-panel-heading"><div><span className="eyebrow">Expediente del deportista</span><h2>Selecciona el estudiante</h2><p>La ficha se completa por secciones y queda guardada en su perfil del aula.</p></div></div>{students.length ? <label className="dossier-student-select"><span>Estudiante</span><select value={selectedStudentId} onChange={(event) => setSelectedStudentId(event.target.value)}>{students.map((student) => <option key={student.id} value={student.id}>{student.full_name} · {student.cedula}</option>)}</select></label> : <div className="classroom-empty">Primero crea una cuenta en la pestaña Estudiantes.</div>}</section>{selectedStudent && <StudentDossierEditor student={selectedStudent} progressEntries={progressHistory} onSaved={refresh} />}</div>}{activeArea === 'progress' && <div className="instructor-area-content"><ProgressEditor students={students} onSaved={refresh} /><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Actividad del aula</span><h2>Avances recientes</h2><p>Consulta las últimas observaciones registradas para el grupo.</p></div></div>{entries.length ? <div className="instructor-activity-list">{entries.map((entry) => <article className="classroom-recent-item" key={entry.id}><span>{dateLabel(entry.created_at)}</span><strong>{entry.title}</strong><small>{studentById[entry.student_id]?.full_name || 'Estudiante'} · {entry.details}</small></article>)}</div> : <div className="classroom-empty">Todavía no hay avances registrados.</div>}</section></div>}{activeArea === 'materials' && <div className="instructor-area-content"><MaterialPublisher onPublished={refresh} /><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Biblioteca del dojang</span><h2>Material publicado</h2><p>Recursos compartidos con los estudiantes.</p></div></div>{materials.length ? <div className="instructor-activity-list">{materials.map((material) => <article className="classroom-recent-item" key={material.id}><span>{dateLabel(material.created_at)} · {levelLabel(material.level)}</span><strong>{material.title}</strong><small>{material.original_name}</small></article>)}</div> : <div className="classroom-empty">Todavía no hay materiales publicados.</div>}</section></div>}</div></main>;
 }
-
 function StudentDashboard({ profile, onSignOut }) {
   const [entries, setEntries] = useState([]); const [materials, setMaterials] = useState([]); const [error, setError] = useState(''); const [openingId, setOpeningId] = useState('');
   useEffect(() => {

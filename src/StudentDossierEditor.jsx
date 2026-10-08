@@ -1,0 +1,130 @@
+import { useEffect, useMemo, useState } from 'react';
+import { classroomLevels, supabase } from './lib/supabase.js';
+
+const tabs = [
+  ['identity', 'Deportista'], ['background', 'Antecedentes'], ['assessment', 'Evaluación'],
+  ['goals', 'Objetivos'], ['achievements', 'Competencias y grados'], ['coach', 'Seguimiento'],
+];
+const periods = [['initial', 'Inicial'], ['control1', 'Control 1'], ['control2', 'Control 2']];
+const physical = [
+  ['height_weight', 'Estatura / peso', 'Ej.: 1,42 m / 38 kg'], ['flexibility', 'Flexibilidad'],
+  ['endurance', 'Resistencia'], ['speed_agility', 'Velocidad / agilidad'], ['strength_power', 'Fuerza / potencia'],
+];
+const technical = [['basic_technique', 'Técnica básica'], ['poomsae', 'Poomsae'], ['kyorugi', 'Kyorugi'], ['discipline', 'Disciplina / actitud'], ['attendance', 'Asistencia / compromiso']];
+const focusOptions = [['formacion', 'Formación'], ['examen_grado', 'Examen de grado'], ['festival', 'Festival'], ['provincial', 'Competencia provincial'], ['nacional', 'Competencia nacional'], ['alto_rendimiento', 'Alto rendimiento']];
+const stageOptions = [['iniciacion', 'Iniciación'], ['formacion', 'Formación'], ['desarrollo', 'Desarrollo'], ['competicion', 'Competición'], ['alto_rendimiento', 'Alto rendimiento']];
+const blankCompetition = () => ({ date: '', event: '', modality: '', category: '', result: '', observation: '' });
+const blankGrade = () => ({ date: '', previous: '', obtained: '', evaluator: '', observations: '' });
+
+function ageFromDate(value) {
+  if (!value) return '';
+  const born = new Date(value + 'T12:00:00');
+  const now = new Date();
+  let age = now.getFullYear() - born.getFullYear();
+  if (now.getMonth() < born.getMonth() || (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())) age -= 1;
+  return age >= 0 ? age : '';
+}
+function Section({ eyebrow, title, children }) { return <section className="dossier-section"><div className="dossier-section-heading"><span className="eyebrow">{eyebrow}</span><h3>{title}</h3></div>{children}</section>; }
+function Field({ label, children, wide = false, hint }) { return <label className={'dossier-field' + (wide ? ' dossier-field-wide' : '')}><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>; }
+function Input({ label, value, onChange, type = 'text', placeholder = '', ...props }) { return <Field label={label}><input type={type} value={value ?? ''} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} {...props} /></Field>; }
+function Textarea({ label, value, onChange, wide = false, rows = 3, placeholder = '' }) { return <Field label={label} wide={wide}><textarea value={value ?? ''} onChange={(event) => onChange(event.target.value)} rows={rows} placeholder={placeholder} /></Field>; }
+function Select({ label, value, onChange, options, placeholder = 'Seleccionar' }) { return <Field label={label}><select value={value ?? ''} onChange={(event) => onChange(event.target.value)}><option value="">{placeholder}</option>{options.map(([id, title]) => <option key={id} value={id}>{title}</option>)}</select></Field>; }
+function ToggleGroup({ label, options, values, onChange }) { return <fieldset className="dossier-toggle-group"><legend>{label}</legend><div>{options.map(([id, title]) => <label key={id}><input type="checkbox" checked={values.includes(id)} onChange={(event) => onChange(event.target.checked ? [...values, id] : values.filter((item) => item !== id))} />{title}</label>)}</div></fieldset>; }
+function AssessmentGrid({ title, rows, values, onChange, rating = false }) {
+  return <div className="dossier-assessment"><h4>{title}</h4><div className="dossier-table-scroll"><table><thead><tr><th>Indicador</th>{periods.map(([, label]) => <th key={label}>{label}</th>)}</tr></thead><tbody>{rows.map(([id, label, placeholder]) => <tr key={id}><th>{label}</th>{periods.map(([period]) => <td key={period}>{rating ? <select aria-label={label + ', ' + period} value={values?.[period]?.[id] ?? ''} onChange={(event) => onChange(period, id, event.target.value)}><option value="">—</option>{[1, 2, 3, 4, 5].map((n) => <option key={n} value={String(n)}>{n} / 5</option>)}</select> : <input aria-label={label + ', ' + period} value={values?.[period]?.[id] ?? ''} onChange={(event) => onChange(period, id, event.target.value)} placeholder={placeholder || 'Registrar'} />}</td>)}</tr>)}</tbody></table></div></div>;
+}
+function StudentPhoto({ path, name, preview, removed }) {
+  const [url, setUrl] = useState('');
+  useEffect(() => {
+    let active = true; setUrl('');
+    if (!path || removed) return () => { active = false; };
+    supabase.storage.from('student-photos').createSignedUrl(path, 300).then(({ data, error }) => { if (active) setUrl(error ? '' : data.signedUrl); });
+    return () => { active = false; };
+  }, [path, removed]);
+  return preview || url ? <img className="student-profile-photo" src={preview || url} alt={'Foto de ' + name} /> : <div className="student-profile-photo classroom-photo-fallback" aria-label={'Sin foto de ' + name}>{name?.trim()?.slice(0, 1)?.toUpperCase() || '?'}</div>;
+}
+
+export default function StudentDossierEditor({ student, progressEntries = [], onSaved }) {
+  const [form, setForm] = useState({});
+  const [activeTab, setActiveTab] = useState('identity');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const preview = useMemo(() => photoFile ? URL.createObjectURL(photoFile) : '', [photoFile]);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
+  useEffect(() => {
+    if (!student) { setForm({}); setPhotoFile(null); setRemovePhoto(false); return; }
+    setForm({ ...student,
+      modalities: student.modalities || [], training_focus: student.training_focus || [],
+      performance_assessments: student.performance_assessments || {},
+      competition_records: student.competition_records || [], grade_records: student.grade_records || [],
+    });
+    setPhotoFile(null); setRemovePhoto(false); setFeedback(''); setActiveTab('identity');
+  }, [student?.id]);
+  const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
+  const updateAssessment = (area, period, key, value) => setForm((prev) => ({ ...prev, performance_assessments: { ...prev.performance_assessments, [area]: { ...prev.performance_assessments?.[area], [period]: { ...prev.performance_assessments?.[area]?.[period], [key]: value } } } }));
+  const updateRecord = (key, index, field, value) => setForm((prev) => ({ ...prev, [key]: prev[key].map((row, i) => i === index ? { ...row, [field]: value } : row) }));
+  const setRecord = (key, index, value) => setForm((prev) => ({ ...prev, [key]: prev[key].map((row, i) => i === index ? value : row) }));
+
+  const submit = async (event) => {
+    event.preventDefault();
+    if (!student || !form.full_name?.trim()) return;
+    if (photoFile && (!['image/jpeg', 'image/png', 'image/webp'].includes(photoFile.type) || photoFile.size > 5 * 1024 * 1024)) { setFeedback('La foto debe ser JPG, PNG o WebP y pesar máximo 5 MB.'); return; }
+    setBusy(true); setFeedback('');
+    let nextPhotoPath = removePhoto ? null : student.profile_photo_path;
+    let uploadedPhotoPath = '';
+    if (photoFile) {
+      const ext = photoFile.type === 'image/png' ? 'png' : photoFile.type === 'image/webp' ? 'webp' : 'jpg';
+      uploadedPhotoPath = student.id + '/' + crypto.randomUUID() + '.' + ext;
+      const { error: uploadError } = await supabase.storage.from('student-photos').upload(uploadedPhotoPath, photoFile, { contentType: photoFile.type, upsert: false });
+      if (uploadError) { setBusy(false); setFeedback('No se pudo subir la foto. ' + uploadError.message); return; }
+      nextPhotoPath = uploadedPhotoPath;
+    }
+    const cleanRows = (rows) => (rows || []).filter((row) => !row._remove && Object.entries(row).some(([key, value]) => key !== '_remove' && String(value || '').trim())).map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => key !== '_remove').map(([key, value]) => [key, String(value || '').trim() || null])));
+    const payload = {
+      full_name: form.full_name.trim(),
+      date_of_birth: form.date_of_birth || null, enrollment_date: form.enrollment_date || null,
+      internal_code: form.internal_code?.trim() || null, sport_category: form.sport_category?.trim() || null,
+      modalities: form.modalities || [], level: form.level || classroomLevels[0].id, belt_rank: form.belt_rank?.trim() || null,
+      branch: form.branch || null, phone: form.phone?.trim() || null, email: form.email?.trim() || null,
+      address: form.address?.trim() || null, educational_institution: form.educational_institution?.trim() || null,
+      course_year: form.course_year?.trim() || null, guardian_name: form.guardian_name?.trim() || null,
+      guardian_relationship: form.guardian_relationship?.trim() || null, guardian_phone: form.guardian_phone?.trim() || null,
+      guardian_email: form.guardian_email?.trim() || null, emergency_contact_name: form.emergency_contact_name?.trim() || null,
+      emergency_contact_phone: form.emergency_contact_phone?.trim() || null, has_previous_taekwondo: form.has_previous_taekwondo === '' ? null : form.has_previous_taekwondo,
+      previous_club: form.previous_club?.trim() || null, practice_duration: form.practice_duration?.trim() || null,
+      other_sports: form.other_sports?.trim() || null, last_competition: form.last_competition?.trim() || null,
+      last_competition_level: form.last_competition_level?.trim() || null, training_observations: form.training_observations?.trim() || null,
+      performance_assessments: form.performance_assessments || {}, short_term_goal: form.short_term_goal?.trim() || null,
+      medium_term_goal: form.medium_term_goal?.trim() || null, long_term_goal: form.long_term_goal?.trim() || null,
+      training_focus: form.training_focus || [], competition_records: cleanRows(form.competition_records),
+      medals_summary: form.medals_summary?.trim() || null, grade_records: cleanRows(form.grade_records),
+      coach_strengths: form.coach_strengths?.trim() || null, coach_improvements: form.coach_improvements?.trim() || null,
+      coach_recommendations: form.coach_recommendations?.trim() || null, athlete_stage: form.athlete_stage || null,
+      instructor_responsible: form.instructor_responsible?.trim() || null, instructor_record_date: form.instructor_record_date || null,
+      athlete_acknowledgement: form.athlete_acknowledgement?.trim() || null, athlete_record_date: form.athlete_record_date || null,
+      guardian_acknowledgement: form.guardian_acknowledgement?.trim() || null, guardian_record_date: form.guardian_record_date || null,
+      profile_photo_path: nextPhotoPath, updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from('profiles').update(payload).eq('id', student.id).eq('role', 'student');
+    if (error) {
+      if (uploadedPhotoPath) await supabase.storage.from('student-photos').remove([uploadedPhotoPath]);
+      setFeedback('No se pudo guardar la ficha. ' + error.message); setBusy(false); return;
+    }
+    if ((photoFile || removePhoto) && student.profile_photo_path) await supabase.storage.from('student-photos').remove([student.profile_photo_path]);
+    setBusy(false); setFeedback('Ficha deportiva guardada.'); setPhotoFile(null); setRemovePhoto(false); onSaved();
+  };
+
+  const renderTab = () => {
+    if (!student) return <div className="classroom-empty">Crea una cuenta o selecciona un deportista para completar su ficha.</div>;
+    if (activeTab === 'identity') return <div className="student-profile-editor-grid"><aside className="student-profile-photo-column"><StudentPhoto path={student.profile_photo_path} name={form.full_name} preview={preview} removed={removePhoto} /><label className="student-photo-picker"><span className="student-photo-picker-action">{photoFile ? 'Cambiar fotografía' : 'Elegir fotografía'}</span><span className="student-photo-picker-name">{photoFile?.name || (student.profile_photo_path && !removePhoto ? 'Foto cargada' : 'Sin foto seleccionada')}</span><small>JPG, PNG o WebP · máximo 5 MB</small><input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Seleccionar foto del estudiante" onChange={(event) => { setPhotoFile(event.target.files?.[0] || null); setRemovePhoto(false); }} /></label>{student.profile_photo_path && <button className="student-photo-remove" type="button" onClick={() => { setPhotoFile(null); setRemovePhoto(true); }}>Quitar foto</button>}<div className="dossier-photo-note">Ficha individual · {ageFromDate(form.date_of_birth) ? ageFromDate(form.date_of_birth) + ' años' : 'Edad por calcular'}</div></aside><div className="dossier-form-grid"><Section eyebrow="01 · Identificación" title="Datos del deportista"><Input label="Nombres y apellidos" value={form.full_name} onChange={(v) => update('full_name', v)} required minLength="3" /><Input label="Cédula" value={student.cedula} onChange={() => {}} readOnly /><Input label="Fecha de nacimiento" type="date" value={form.date_of_birth} onChange={(v) => update('date_of_birth', v)} max={new Date().toISOString().slice(0, 10)} /><Field label="Edad"><input value={ageFromDate(form.date_of_birth) ? ageFromDate(form.date_of_birth) + ' años' : 'Se calcula con la fecha de nacimiento'} readOnly /></Field><Input label="Fecha de ingreso" type="date" value={form.enrollment_date} onChange={(v) => update('enrollment_date', v)} /><Input label="Código interno" value={form.internal_code} onChange={(v) => update('internal_code', v)} /><Select label="Sede" value={form.branch} onChange={(v) => update('branch', v)} options={ [['el_condado', 'Matriz · El Condado'], ['pomasqui', 'Sucursal · Pomasqui']] } /><Select label="Nivel formativo" value={form.level} onChange={(v) => update('level', v)} options={classroomLevels.map((item) => [item.id, item.label])} /><Input label="Categoría" value={form.sport_category} onChange={(v) => update('sport_category', v)} placeholder="Ej.: Infantil, juvenil" /><Input label="Grado / Kup, Poom o Dan" value={form.belt_rank} onChange={(v) => update('belt_rank', v)} placeholder="Ej.: Blanco punta amarilla" /><ToggleGroup label="Modalidad" options={ [['kyorugi', 'Kyorugi'], ['poomsae', 'Poomsae'], ['ambas', 'Ambas']] } values={form.modalities || []} onChange={(v) => update('modalities', v)} /></Section><Section eyebrow="02 · Contacto" title="Cómo localizar a la familia"><Input label="Teléfono" type="tel" value={form.phone} onChange={(v) => update('phone', v)} /><Input label="Correo electrónico" type="email" value={form.email} onChange={(v) => update('email', v)} /><Input label="Institución educativa" value={form.educational_institution} onChange={(v) => update('educational_institution', v)} /><Input label="Curso / año" value={form.course_year} onChange={(v) => update('course_year', v)} /><Textarea label="Dirección" value={form.address} onChange={(v) => update('address', v)} wide /></Section></div></div>;
+    if (activeTab === 'background') return <div className="dossier-form-grid"><Section eyebrow="03 · Familia y seguridad" title="Representante y emergencia"><Input label="Representante" value={form.guardian_name} onChange={(v) => update('guardian_name', v)} /><Input label="Parentesco" value={form.guardian_relationship} onChange={(v) => update('guardian_relationship', v)} /><Input label="Teléfono del representante" type="tel" value={form.guardian_phone} onChange={(v) => update('guardian_phone', v)} /><Input label="Correo del representante" type="email" value={form.guardian_email} onChange={(v) => update('guardian_email', v)} /><Input label="Contacto de emergencia" value={form.emergency_contact_name} onChange={(v) => update('emergency_contact_name', v)} /><Input label="Teléfono de emergencia" type="tel" value={form.emergency_contact_phone} onChange={(v) => update('emergency_contact_phone', v)} /></Section><Section eyebrow="04 · Experiencia previa" title="Antecedentes deportivos"><Field label="¿Ha practicado Taekwondo antes?"><select value={form.has_previous_taekwondo == null ? '' : String(form.has_previous_taekwondo)} onChange={(e) => update('has_previous_taekwondo', e.target.value === '' ? '' : e.target.value === 'true')}><option value="">Sin registrar</option><option value="true">Sí</option><option value="false">No</option></select></Field><Input label="Club anterior" value={form.previous_club} onChange={(v) => update('previous_club', v)} /><Input label="Tiempo de práctica" value={form.practice_duration} onChange={(v) => update('practice_duration', v)} placeholder="Ej.: 2 años" /><Input label="Otros deportes" value={form.other_sports} onChange={(v) => update('other_sports', v)} /><Input label="Última competencia / evento" value={form.last_competition} onChange={(v) => update('last_competition', v)} /><Input label="Nivel del evento" value={form.last_competition_level} onChange={(v) => update('last_competition_level', v)} /><Textarea label="Observaciones relevantes para el entrenamiento" value={form.training_observations} onChange={(v) => update('training_observations', v)} wide /></Section></div>;
+    if (activeTab === 'assessment') return <div className="dossier-form-grid dossier-form-single"><Section eyebrow="05 · Evaluación y controles" title="Rendimiento deportivo"><p className="dossier-intro">Registra una referencia inicial y dos controles para observar el progreso. Usa los mismos criterios en cada revisión.</p><AssessmentGrid title="Condición física" rows={physical} values={form.performance_assessments?.physical} onChange={(period, key, value) => updateAssessment('physical', period, key, value)} /><AssessmentGrid title="Escala técnica y actitudinal" rows={technical} values={form.performance_assessments?.technical} onChange={(period, key, value) => updateAssessment('technical', period, key, value)} rating /><p className="dossier-scale-note">Escala: 1 = Inicial · 2 = En desarrollo · 3 = Adecuado · 4 = Bueno · 5 = Excelente</p></Section></div>;
+    if (activeTab === 'goals') return <div className="dossier-form-grid"><Section eyebrow="06 · Objetivos deportivos" title="Plan de crecimiento"><Textarea label="Corto plazo · 1–3 meses" value={form.short_term_goal} onChange={(v) => update('short_term_goal', v)} rows={4} placeholder="Objetivo concreto para los próximos meses" /><Textarea label="Mediano plazo · 3–6 meses" value={form.medium_term_goal} onChange={(v) => update('medium_term_goal', v)} rows={4} /><Textarea label="Largo plazo · 6–12 meses" value={form.long_term_goal} onChange={(v) => update('long_term_goal', v)} rows={4} /><Select label="Etapa actual de la ruta Taewoong" value={form.athlete_stage} onChange={(v) => update('athlete_stage', v)} options={stageOptions} /></Section><Section eyebrow="Enfoque" title="Prioridades del deportista"><ToggleGroup label="Selecciona los objetivos que aplican" options={focusOptions} values={form.training_focus || []} onChange={(v) => update('training_focus', v)} /></Section></div>;
+    if (activeTab === 'achievements') return <div className="dossier-form-grid"><Section eyebrow="07 · Registro deportivo" title="Competencias y logros"><p className="dossier-intro">Añade una fila por cada participación. Las filas vacías se omiten al guardar.</p>{(form.competition_records || []).map((row, i) => <div className="dossier-record" key={'comp-' + i}><div className="dossier-record-heading"><strong>Competencia {String(i + 1).padStart(2, '0')}</strong><button type="button" onClick={() => setRecord('competition_records', i, { ...row, _remove: true })} aria-label="Quitar competencia">Quitar</button></div>{!row._remove && <div className="dossier-form-grid"><Input label="Fecha" type="date" value={row.date} onChange={(v) => updateRecord('competition_records', i, 'date', v)} /><Input label="Evento" value={row.event} onChange={(v) => updateRecord('competition_records', i, 'event', v)} /><Input label="Modalidad" value={row.modality} onChange={(v) => updateRecord('competition_records', i, 'modality', v)} /><Input label="Categoría" value={row.category} onChange={(v) => updateRecord('competition_records', i, 'category', v)} /><Input label="Resultado" value={row.result} onChange={(v) => updateRecord('competition_records', i, 'result', v)} /><Input label="Observación" value={row.observation} onChange={(v) => updateRecord('competition_records', i, 'observation', v)} /></div>}</div>)}<button className="dossier-add-row" type="button" onClick={() => update('competition_records', [...(form.competition_records || []), blankCompetition()])}>＋ Agregar competencia</button><Textarea label="Medallas / logros acumulados" value={form.medals_summary} onChange={(v) => update('medals_summary', v)} wide /></Section><Section eyebrow="08 · Progreso de cinturón" title="Control de grados">{(form.grade_records || []).map((row, i) => <div className="dossier-record" key={'grade-' + i}><div className="dossier-record-heading"><strong>Ascenso {String(i + 1).padStart(2, '0')}</strong><button type="button" onClick={() => setRecord('grade_records', i, { ...row, _remove: true })}>Quitar</button></div>{!row._remove && <div className="dossier-form-grid"><Input label="Fecha" type="date" value={row.date} onChange={(v) => updateRecord('grade_records', i, 'date', v)} /><Input label="Grado anterior" value={row.previous} onChange={(v) => updateRecord('grade_records', i, 'previous', v)} /><Input label="Grado obtenido" value={row.obtained} onChange={(v) => updateRecord('grade_records', i, 'obtained', v)} /><Input label="Evaluador" value={row.evaluator} onChange={(v) => updateRecord('grade_records', i, 'evaluator', v)} /><Input label="Observaciones" value={row.observations} onChange={(v) => updateRecord('grade_records', i, 'observations', v)} /></div>}</div>)}<button className="dossier-add-row" type="button" onClick={() => update('grade_records', [...(form.grade_records || []), blankGrade()])}>＋ Agregar ascenso</button></Section></div>;
+    return <div className="dossier-form-grid"><Section eyebrow="09 · Criterio del entrenador" title="Seguimiento individual"><Textarea label="Fortalezas" value={form.coach_strengths} onChange={(v) => update('coach_strengths', v)} rows={4} /><Textarea label="Aspectos por mejorar" value={form.coach_improvements} onChange={(v) => update('coach_improvements', v)} rows={4} /><Textarea label="Recomendaciones / próximo objetivo" value={form.coach_recommendations} onChange={(v) => update('coach_recommendations', v)} rows={4} /></Section><Section eyebrow="10 · Ruta del deportista" title="Constancia de revisión"><p className="dossier-intro">Registra quién revisó la ficha y cuándo. Estos campos son un control administrativo; no constituyen una firma electrónica.</p><Input label="Entrenador responsable" value={form.instructor_responsible} onChange={(v) => update('instructor_responsible', v)} /><Input label="Fecha de revisión" type="date" value={form.instructor_record_date} onChange={(v) => update('instructor_record_date', v)} /><Input label="Deportista que revisó" value={form.athlete_acknowledgement} onChange={(v) => update('athlete_acknowledgement', v)} /><Input label="Fecha de revisión del deportista" type="date" value={form.athlete_record_date} onChange={(v) => update('athlete_record_date', v)} /><Input label="Representante que revisó (si aplica)" value={form.guardian_acknowledgement} onChange={(v) => update('guardian_acknowledgement', v)} /><Input label="Fecha de revisión del representante" type="date" value={form.guardian_record_date} onChange={(v) => update('guardian_record_date', v)} /></Section></div>;
+  };
+
+  return <section className="classroom-panel dossier-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Ficha deportiva individual</span><h2>{student?.full_name || 'Selecciona un estudiante'}</h2><p>Identificación, formación, rendimiento y evolución del deportista.</p></div>{student && <span className="dossier-student-code">{form.internal_code || 'TAEWOONG'}</span>}</div>{student && <div className="dossier-tabs" role="tablist" aria-label="Secciones de la ficha deportiva">{tabs.map(([id, label], index) => <button type="button" role="tab" id={'dossier-tab-' + id} aria-selected={activeTab === id} aria-controls="dossier-tab-panel" className={activeTab === id ? 'dossier-tab-active' : ''} key={id} onClick={() => setActiveTab(id)}><span>{String(index + 1).padStart(2, '0')}</span>{label}</button>)}</div>}<form onSubmit={submit}><div id="dossier-tab-panel" role="tabpanel" aria-labelledby={'dossier-tab-' + activeTab} className="dossier-tab-panel">{renderTab()}</div>{student && <div className="dossier-save-row">{feedback && <p className={feedback.includes('guardada') ? 'classroom-success' : 'classroom-error'} role="status">{feedback}</p>}<button className="button button-primary classroom-submit" disabled={busy}>{busy ? 'Guardando ficha…' : 'Guardar ficha deportiva'} <span>→</span></button></div>}</form>{student && <div className="student-profile-history"><div><span className="eyebrow">Seguimiento formativo</span><h3>Historial de avances del aula</h3></div>{progressEntries.length ? <div className="student-timeline">{progressEntries.map((entry) => <article key={entry.id}><span className="student-timeline-dot"/><small>{new Intl.DateTimeFormat('es-EC', { dateStyle: 'medium' }).format(new Date(entry.created_at))}</small><h4>{entry.title}</h4><p>{entry.details}</p></article>)}</div> : <div className="classroom-empty">Aún no hay avances registrados para este estudiante.</div>}</div>}</section>;
+}
