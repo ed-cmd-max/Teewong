@@ -309,11 +309,11 @@ button.button{font-family:inherit;cursor:pointer}
 @media(max-width:780px){.home-story-heading{align-items:flex-start;flex-direction:column;gap:14px}.home-story-grid,.home-purpose-grid,.club-timeline{grid-template-columns:1fr}.home-story-lead{min-height:unset}.home-story-timeline{gap:0}.club-timeline{margin-bottom:28px}}
 @media(max-width:520px){.home-story-section{padding:56px 6vw}.home-story-heading h2{font-size:34px}.home-story-timeline article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:15px 0}.home-purpose-grid article{padding:22px}.club-timeline article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:19px}}
 .student-profile-editor-grid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:26px;align-items:start}
-.student-profile-photo-column{display:grid;justify-items:center;gap:13px;padding:20px;background:#f6f9fc;border:1px solid #e2ebf3;border-radius:12px}
+.student-profile-photo-column{display:grid;justify-items:center;gap:13px;min-width:0;padding:20px;background:#f6f9fc;border:1px solid #e2ebf3;border-radius:12px}
 .student-profile-photo{width:150px;height:180px;object-fit:cover;border-radius:10px;background:#e5f1fc;color:#4387c8}
 .classroom-photo-fallback{display:grid;place-items:center;font-size:45px;font-weight:900}
-.student-profile-photo-column .classroom-file-label{width:100%;font-size:11px}
-.student-profile-photo-column input[type=file]{padding:8px;font-size:11px}
+.student-profile-photo-column .classroom-file-label{display:grid;justify-items:stretch;align-content:start;gap:8px;width:100%;min-width:0;box-sizing:border-box;font-size:11px}
+.student-profile-photo-column input[type=file]{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;padding:8px 6px;font-size:10px}
 .student-profile-photo-column .classroom-file-label small{display:block;margin-top:6px;line-height:1.4}
 .student-photo-remove{border:0;background:transparent;color:#9b3530;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
 .student-profile-form{grid-template-columns:repeat(2,minmax(0,1fr))}
