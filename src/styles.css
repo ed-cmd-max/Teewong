@@ -308,13 +308,16 @@ button.button{font-family:inherit;cursor:pointer}
 .club-signature{font-weight:800;color:#c9d9eb!important;font-size:14px!important}
 @media(max-width:780px){.home-story-heading{align-items:flex-start;flex-direction:column;gap:14px}.home-story-grid,.home-purpose-grid,.club-timeline{grid-template-columns:1fr}.home-story-lead{min-height:unset}.home-story-timeline{gap:0}.club-timeline{margin-bottom:28px}}
 @media(max-width:520px){.home-story-section{padding:56px 6vw}.home-story-heading h2{font-size:34px}.home-story-timeline article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:15px 0}.home-purpose-grid article{padding:22px}.club-timeline article{grid-template-columns:58px minmax(0,1fr);gap:10px;padding:19px}}
-.student-profile-editor-grid{display:grid;grid-template-columns:210px minmax(0,1fr);gap:26px;align-items:start}
-.student-profile-photo-column{display:grid;justify-items:center;gap:13px;min-width:0;padding:20px;background:#f6f9fc;border:1px solid #e2ebf3;border-radius:12px}
-.student-profile-photo{width:150px;height:180px;object-fit:cover;border-radius:10px;background:#e5f1fc;color:#4387c8}
+.student-profile-editor-grid{display:grid;grid-template-columns:minmax(0,210px) minmax(0,1fr);gap:26px;align-items:start}
+.student-profile-photo-column{display:grid;justify-items:center;align-content:start;gap:13px;width:100%;min-width:0;box-sizing:border-box;padding:16px;background:#f6f9fc;border:1px solid #e2ebf3;border-radius:12px}
+.student-profile-photo{width:min(100%,160px);height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:10px;background:#e5f1fc;color:#4387c8;box-sizing:border-box}
 .classroom-photo-fallback{display:grid;place-items:center;font-size:45px;font-weight:900}
-.student-profile-photo-column .classroom-file-label{display:grid;justify-items:stretch;align-content:start;gap:8px;width:100%;min-width:0;box-sizing:border-box;font-size:11px}
-.student-profile-photo-column input[type=file]{display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;overflow:hidden;padding:8px 6px;font-size:10px}
-.student-profile-photo-column .classroom-file-label small{display:block;margin-top:6px;line-height:1.4}
+.student-photo-picker{position:relative;display:grid;justify-items:stretch;gap:7px;width:100%;min-width:0;box-sizing:border-box;padding:10px;border:1px dashed #b9d1e5;border-radius:9px;background:#fff;color:#2b4562;cursor:pointer}
+.student-photo-picker:focus-within{outline:3px solid #4387c822;border-color:#4387c8}
+.student-photo-picker-action{display:block;padding:8px 9px;border-radius:6px;background:#4387c8;color:#fff;text-align:center;font-size:11px;font-weight:850}
+.student-photo-picker-name{display:block;max-width:100%;overflow:hidden;color:#405e7d;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.student-photo-picker small{font-size:9px;line-height:1.35;color:#73879d}
+.student-photo-picker input[type=file]{position:absolute;inset:0;width:100%;height:100%;min-width:0;box-sizing:border-box;opacity:0;cursor:pointer}
 .student-photo-remove{border:0;background:transparent;color:#9b3530;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
 .student-profile-form{grid-template-columns:repeat(2,minmax(0,1fr))}
 .student-profile-save{grid-column:1/-1}
@@ -336,6 +339,6 @@ button.button{font-family:inherit;cursor:pointer}
 .student-profile-history .classroom-empty{align-self:start}
 .student-profile-history .student-timeline{max-height:360px;overflow:auto;padding:3px 8px 3px 3px}
 .student-profile-history .student-timeline h4{color:#24435f;font-size:13px;margin:5px 0}
-@media(max-width:900px){.student-profile-editor-grid{grid-template-columns:175px minmax(0,1fr);gap:18px}.student-member-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.student-roster-open{grid-column:2/-1;justify-self:start}}
+@media(max-width:900px){.student-profile-editor-grid{grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:18px}.student-member-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.student-roster-open{grid-column:2/-1;justify-self:start}}
 @media(max-width:700px){.student-profile-editor-grid{grid-template-columns:1fr}.student-profile-photo-column{max-width:280px;width:100%;justify-self:center}.student-profile-form{grid-template-columns:1fr}.student-profile-save,.student-profile-form>.classroom-success,.student-profile-form>.classroom-error{grid-column:auto}.student-profile-history{grid-template-columns:1fr;gap:10px}.student-welcome-person{align-items:flex-start}.student-self-photo{width:60px;height:60px}.student-member-grid{grid-template-columns:1fr 1fr}.student-roster-open{grid-column:2/-1}.classroom-roster article{grid-template-columns:36px minmax(0,1fr);align-items:start}.classroom-roster article>div{min-width:0;overflow-wrap:anywhere}}
 @media(max-width:420px){.student-member-grid{grid-template-columns:1fr}.student-welcome-person{gap:12px}}
