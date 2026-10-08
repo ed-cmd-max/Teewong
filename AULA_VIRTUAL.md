@@ -8,9 +8,10 @@ El aula está integrada al sitio, pero necesita un proyecto de Supabase para gua
 2. En Supabase → SQL Editor, ejecuta el contenido de `supabase/migrations/20261004000000_virtual_classroom.sql`.
 3. Para añadir fichas individuales, en el mismo SQL Editor ejecuta también `supabase/migrations/20261006000000_student_profiles.sql`. Esta actualización agrega los datos de contacto, sede, nacimiento y una foto privada por estudiante.
 4. Para completar la ficha deportiva, ejecuta además `supabase/migrations/20261007000000_complete_student_dossier.sql`. Agrega antecedentes deportivos, evaluaciones, objetivos, competencias, grados y seguimiento del entrenador. Ejecuta después `supabase/migrations/20261007000001_complete_dossier_details.sql` para guardar por separado el grado Kup y el rango Poom/Dan, los conteos de medallas y las firmas gráficas del deportista, representante y entrenador.
-5. En Authentication → Sign In / Providers, desactiva el registro público por correo. Las cuentas las crea el instructor desde el aula.
-6. En Authentication → Users, agrega la primera cuenta del instructor con este correo interno, donde los dígitos son su cédula: `0100000000@login.taewoong.invalid`. Establece una contraseña segura y confirma el usuario. Ese correo es solo un identificador interno; no se usa para enviar mensajes.
-7. En SQL Editor, asigna el rol al usuario inicial (reemplaza nombre y cédula):
+5. Para adjuntar una copia privada de la cédula y controlar mensualidades, ejecuta `supabase/migrations/20261008000000_student_documents_and_payments.sql`. La ficha acepta PDF/JPG/PNG de hasta 10 MB. La mensualidad se agenda cada mes desde la fecha de ingreso y el instructor puede registrar el pago e imprimir o guardar su recibo como PDF.
+6. En Authentication → Sign In / Providers, desactiva el registro público por correo. Las cuentas las crea el instructor desde el aula.
+7. En Authentication → Users, agrega la primera cuenta del instructor con este correo interno, donde los dígitos son su cédula: `0100000000@login.taewoong.invalid`. Establece una contraseña segura y confirma el usuario. Ese correo es solo un identificador interno; no se usa para enviar mensajes.
+8. En SQL Editor, asigna el rol al usuario inicial (reemplaza nombre y cédula):
 
 ```sql
 update public.profiles p
@@ -42,6 +43,8 @@ Conecta el sitio de Netlify al repositorio `ed-cmd-max/Teewong` y a la rama `mas
 - Los estudiantes inician sesión con cédula y contraseña; su correo interno se genera como `<cedula>@login.taewoong.invalid`.
 - El instructor puede crear cuentas, elegir nivel, registrar grado/cinturón y dejar observaciones fechadas.
 - El instructor puede completar una ficha deportiva por pestañas: identificación, contacto, foto, antecedentes, evaluaciones físicas y técnicas, objetivos, competencias, ascensos de grado, ruta deportiva y seguimiento. Las fotos se guardan en un bucket privado y cada estudiante solo puede ver la suya.
+- El instructor puede guardar la copia de cédula (PDF/JPG/PNG) en un bucket privado al que solo tienen acceso instructores.
+- El instructor registra pagos mensuales ligados a la fecha de ingreso, consulta pagos pendientes y genera recibos que se pueden imprimir o guardar como PDF. El estudiante puede consultar sus propios recibos en el aula.
 - Cada estudiante solo consulta su perfil, su historial y recursos compartidos con su nivel (o con todos).
 - Los archivos se guardan en un bucket privado, con URLs firmadas temporales. Límite configurado: 50 MB por archivo.
 - Los niveles disponibles son Taekwondo Kids, Principiantes / Novatos, Intermedios y Avanzados.
