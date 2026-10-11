@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from './lib/supabase.js';
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
 const money = (value) => new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(Number(value || 0));
 const dateLabel = (value) => value ? new Intl.DateTimeFormat('es-EC', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`)) : 'Sin fecha';
 const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -12,6 +15,27 @@ function dueDateForMonth(startValue, monthOffset) {
   const lastDay = new Date(firstOfMonth.getFullYear(), firstOfMonth.getMonth() + 1, 0).getDate();
   firstOfMonth.setDate(Math.min(start.getDate(), lastDay));
   return `${firstOfMonth.getFullYear()}-${String(firstOfMonth.getMonth() + 1).padStart(2, '0')}-${String(firstOfMonth.getDate()).padStart(2, '0')}`;
+}
+
+function whatsappNumber(value) {
+  let number = String(value || '').replace(/\D/g, '');
+  if (number.startsWith('00')) number = number.slice(2);
+  if (number.startsWith('0')) number = '593' + number.slice(1);
+  else if (number.length === 9) number = '593' + number;
+  return number.length >= 10 ? number : '';
+}
+
+function WhatsAppReminder({ student, dueDates }) {
+  if (!student || !dueDates.length) return null;
+  const phone = whatsappNumber(student.guardian_phone || student.phone);
+  const contact = student.guardian_name || `familia de ${student.full_name}`;
+  const overdueDates = dueDates.filter((date) => date <= today());
+  const dueMessage = overdueDates.length
+    ? `Tiene ${overdueDates.length === 1 ? 'pendiente la mensualidad' : `${overdueDates.length} mensualidades pendientes`}, desde ${dateLabel(overdueDates[0])}.`
+    : `Le recordamos que la próxima mensualidad corresponde al ${dateLabel(dueDates[0])}.`;
+  const message = `Hola, ${contact}. Le escribimos de Club Taewoong para recordarle el pago de la mensualidad de ${student.full_name}. ${dueMessage} Si ya realizó el pago, puede ignorar este mensaje. ¡Gracias!`;
+  const href = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(message)}` : '';
+  return <section className="classroom-panel payment-reminder"><div><span className="eyebrow">Recordatorio de pago</span><h2>Enviar aviso por WhatsApp</h2><p>{phone ? `Contacto: ${student.guardian_name ? student.guardian_name + ' · ' : ''}${student.guardian_phone || student.phone}.` : 'Registra un teléfono móvil del representante o del deportista en la ficha para preparar el mensaje.'} El texto se abre en WhatsApp para que lo revises y lo envíes.</p></div>{href ? <a className="button button-primary payment-reminder-button" href={href} target="_blank" rel="noreferrer">Abrir WhatsApp con recordatorio <span>↗</span></a> : <button className="button button-primary payment-reminder-button" disabled>Falta el celular de contacto</button>}</section>;
 }
 
 function makeReceipt(payment, student) {
@@ -74,7 +98,10 @@ export default function PaymentsPanel({ students, instructorId }) {
     const dues = [];
     for (let month = 0; month < 240; month += 1) {
       const due = dueDateForMonth(selected.enrollment_date, month);
-      if (due > todayValue) break;
+      if (due > todayValue) {
+        if (!payments.some((payment) => payment.due_date === due)) dues.push(due);
+        break;
+      }
       if (!payments.some((payment) => payment.due_date === due)) dues.push(due);
       const start = new Date(`${selected.enrollment_date}T12:00:00`);
       if (new Date(start.getFullYear(), start.getMonth() + month, 1).getTime() > now.getTime()) break;
@@ -99,5 +126,5 @@ export default function PaymentsPanel({ students, instructorId }) {
     setBusy(false);
   };
 
-  return <div className="instructor-area-content"><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Control mensual</span><h2>Registrar pago y generar recibo</h2><p>La fecha mensual se calcula desde la fecha de ingreso de cada deportista. Puedes elegir una mensualidad pendiente y registrar el día en que pagó.</p></div></div>{students.length ? <form className="classroom-form classroom-grid-form payment-form" onSubmit={submit}><label>Deportista<select value={studentId} onChange={(event) => setStudentId(event.target.value)}>{students.map((student) => <option key={student.id} value={student.id}>{student.full_name} · {student.cedula}</option>)}</select></label><label>Mensualidad pendiente<select value={dueDate} onChange={(event) => setDueDate(event.target.value)} required disabled={!pendingDueDates.length}><option value="">{selected?.enrollment_date ? 'No hay mensualidades pendientes' : 'Registra primero la fecha de ingreso en la ficha'}</option>{pendingDueDates.map((date) => <option value={date} key={date}>{dateLabel(date)}</option>)}</select></label><label>Fecha en que se recibió<input type="date" value={paymentDate} max={today()} onChange={(event) => setPaymentDate(event.target.value)} required /></label><label>Valor recibido (USD)<input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label><label>Forma de pago<select value={method} onChange={(event) => setMethod(event.target.value)}><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="otro">Otro</option></select></label><label>Referencia opcional<input value={reference} onChange={(event) => setReference(event.target.value)} maxLength="100" placeholder="N.º de transferencia" /></label><label className="classroom-full-field">Nota opcional<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows="2" maxLength="500" placeholder="Observaciones del pago" /></label><button className="button button-primary classroom-submit" disabled={busy || !dueDate}>{busy ? 'Guardando…' : 'Registrar pago'} <span>→</span></button></form> : <div className="classroom-empty">Crea primero una cuenta de estudiante.</div>}{feedback && <p className="classroom-success">{feedback}</p>}{error && <p className="classroom-error" role="alert">{error}</p>}</section><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Recibos emitidos</span><h2>Historial del estudiante</h2><p>Los recibos se pueden imprimir o guardar como PDF.</p></div></div><PaymentRows rows={payments} studentsById={studentsById} /></section></div>;
+  return <div className="instructor-area-content"><section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Control mensual</span><h2>Registrar pago y generar recibo</h2><p>La fecha mensual se calcula desde la fecha de ingreso de cada deportista. Puedes elegir una mensualidad pendiente o próxima y registrar el día en que pagó.</p></div></div>{students.length ? <form className="classroom-form classroom-grid-form payment-form" onSubmit={submit}><label>Deportista<select value={studentId} onChange={(event) => setStudentId(event.target.value)}>{students.map((student) => <option key={student.id} value={student.id}>{student.full_name} · {student.cedula}</option>)}</select></label><label>Mensualidad pendiente o próxima<select value={dueDate} onChange={(event) => setDueDate(event.target.value)} required disabled={!pendingDueDates.length}><option value="">{selected?.enrollment_date ? 'No hay mensualidades pendientes' : 'Registra primero la fecha de ingreso en la ficha'}</option>{pendingDueDates.map((date) => <option value={date} key={date}>{dateLabel(date)}</option>)}</select></label><label>Fecha en que se recibió<input type="date" value={paymentDate} max={today()} onChange={(event) => setPaymentDate(event.target.value)} required /></label><label>Valor recibido (USD)<input type="number" min="0.01" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} required /></label><label>Forma de pago<select value={method} onChange={(event) => setMethod(event.target.value)}><option value="efectivo">Efectivo</option><option value="transferencia">Transferencia</option><option value="tarjeta">Tarjeta</option><option value="otro">Otro</option></select></label><label>Referencia opcional<input value={reference} onChange={(event) => setReference(event.target.value)} maxLength="100" placeholder="N.º de transferencia" /></label><label className="classroom-full-field">Nota opcional<textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows="2" maxLength="500" placeholder="Observaciones del pago" /></label><button className="button button-primary classroom-submit" disabled={busy || !dueDate}>{busy ? 'Guardando…' : 'Registrar pago'} <span>→</span></button></form> : <div className="classroom-empty">Crea primero una cuenta de estudiante.</div>}{feedback && <p className="classroom-success">{feedback}</p>}{error && <p className="classroom-error" role="alert">{error}</p>}</section>{selected && <WhatsAppReminder student={selected} dueDates={pendingDueDates} />}<section className="classroom-panel"><div className="classroom-panel-heading"><div><span className="eyebrow">Recibos emitidos</span><h2>Historial del estudiante</h2><p>Los recibos se pueden imprimir o guardar como PDF.</p></div></div><PaymentRows rows={payments} studentsById={studentsById} /></section></div>;
 }
