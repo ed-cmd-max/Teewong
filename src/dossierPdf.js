@@ -5,7 +5,48 @@ const humanDate = (value) => value ? new Intl.DateTimeFormat('es-EC', { dateStyl
 const jsonObject = (value) => value && typeof value === 'object' ? value : {};
 const textRows = (items, keys, labels) => items?.length ? `<table><thead><tr>${labels.map((label) => `<th>${esc(label)}</th>`).join('')}</tr></thead><tbody>${items.map((item) => `<tr>${keys.map((key) => `<td>${esc(item[key])}</td>`).join('')}</tr>`).join('')}</tbody></table>` : '<p class="muted">Sin registros.</p>';
 const line = (label, value) => `<div class="field"><small>${esc(label)}</small><strong>${esc(value)}</strong></div>`;
-const section = (title, content) => `<section><h2>${esc(title)}</h2>${content}</section>`;
+const section = (title, content) => `<section class="report-section"><h2 class="section-title">${esc(title)}</h2>${content || '<p class="muted">Sin información registrada.</p>'}</section>`;
+
+const printStyles = `
+  @page{size:A4;margin:13mm 12mm 15mm}
+  *{box-sizing:border-box}
+  body{margin:0;background:#eef3f8;color:#1d3046;font:10pt/1.45 Arial,Helvetica,sans-serif}
+  .sheet{max-width:930px;margin:22px auto;padding:28px 32px;background:#fff;border:1px solid #dce6ef;box-shadow:0 14px 45px #172b4612}
+  .brand-bar{height:5px;margin:-28px -32px 23px;background:linear-gradient(90deg,#ef454b 0 16%,#f0c95b 16% 100%)}
+  .report-header{display:grid;grid-template-columns:1fr 120px;gap:20px;align-items:center;padding-bottom:20px;border-bottom:1px solid #dce6ef}
+  .brand-lockup{display:flex;align-items:center;gap:12px;margin-bottom:17px}
+  .brand-lockup img{width:48px;height:48px;object-fit:contain;border:1px solid #e2eaf1;border-radius:50%;padding:4px}
+  .brand-lockup strong{display:block;color:#172b46;font-size:14px;letter-spacing:.12em}
+  .brand-lockup small{display:block;margin-top:3px;color:#73849a;font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .report-kicker{margin:0;color:#4387c8;font-size:8px;font-weight:900;letter-spacing:.19em;text-transform:uppercase}
+  .report-header h1{margin:6px 0 2px;color:#152a45;font-size:25px;line-height:1.08;letter-spacing:-.04em}
+  .report-header .student-id{margin:6px 0 0;color:#72849a;font-size:10px}
+  .report-header .student-photo{width:105px;height:126px;justify-self:end;object-fit:cover;border:3px solid #f0c95b;border-radius:10px;background:#f2f7fb}
+  .summary-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .summary-chips span{padding:5px 8px;border:1px solid #dce8f2;border-radius:99px;background:#f4f8fc;color:#42617f;font-size:8px;font-weight:800}
+  .report-section{margin-top:18px;break-inside:auto}
+  .section-title{display:flex;align-items:center;gap:9px;margin:0 0 9px;padding:0 0 7px;border-bottom:1px solid #dfe8f0;color:#23415f;font-size:11px;letter-spacing:.035em;break-after:avoid}
+  .section-title:before{content:"";width:4px;height:17px;border-radius:3px;background:#4387c8}
+  .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .field{min-height:43px;padding:7px 9px;border:1px solid #e4ecf3;border-radius:6px;background:#f9fbfd;overflow-wrap:anywhere;break-inside:avoid}
+  .field small{display:block;margin-bottom:3px;color:#8191a2;font-size:7px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+  .field strong{display:block;color:#28435e;font-size:9px;font-weight:700}
+  h3{margin:12px 0 6px;color:#42617f;font-size:9px}
+  p{margin:7px 0;color:#4e6278;font-size:9px;line-height:1.55;overflow-wrap:anywhere}
+  p b{color:#294866}
+  table{width:100%;margin:7px 0 10px;border:1px solid #dfe8f0;border-collapse:collapse;font-size:8px;break-inside:auto}
+  thead{display:table-header-group}tr{break-inside:avoid;break-after:auto}
+  th{background:#edf4fa;color:#526d87;text-align:left;font-size:7px;font-weight:900;letter-spacing:.04em;text-transform:uppercase}
+  td,th{padding:6px 7px;border:1px solid #dfe8f0;vertical-align:top;overflow-wrap:anywhere}
+  tbody tr:nth-child(even){background:#f8fafc}td{color:#405770}
+  .notes{padding:9px 11px;border-left:3px solid #f0c95b;border-radius:0 5px 5px 0;background:#fffaf0;white-space:pre-wrap}
+  .muted{padding:9px 11px;border-radius:5px;background:#f7f9fb;color:#8292a3;font-size:8px}
+  .report-footer{display:flex;justify-content:space-between;gap:12px;margin-top:22px;padding-top:10px;border-top:2px solid #f0c95b;color:#8291a1;font-size:7px}
+  .actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+  .actions button{padding:11px 16px;border:0;border-radius:6px;background:#4387c8;color:#fff;font-weight:800;cursor:pointer}
+  @media(max-width:600px){.sheet{margin:0;padding:22px 17px;border:0;box-shadow:none}.brand-bar{margin:-22px -17px 19px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.report-header{grid-template-columns:1fr 84px}.report-header .student-photo{width:78px;height:96px}.report-header h1{font-size:20px}}
+  @media print{body{background:#fff;font-size:9pt}.sheet{max-width:none;margin:0;padding:0;border:0;box-shadow:none}.brand-bar{margin:0 0 15px}.actions{display:none}.report-footer{break-inside:avoid}.report-section{margin-top:14px}a{color:inherit;text-decoration:none}}
+`;
 
 function evaluationTable(assessments, area, title) {
   const values = jsonObject(assessments?.[area]);
@@ -18,7 +59,7 @@ function evaluationTable(assessments, area, title) {
 export async function downloadStudentDossierPdf(student) {
   const printable = window.open('', '_blank', 'width=900,height=1000');
   if (!printable) { window.alert('Permite las ventanas emergentes para generar el PDF.'); return; }
-  printable.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ficha deportiva</title><style> *{box-sizing:border-box}body{font:12px Arial,sans-serif;color:#1b2d43;margin:0;padding:26px;background:#eef3f8}.sheet{max-width:900px;margin:auto;background:#fff;padding:34px;border:1px solid #dbe5ee}.top{display:flex;justify-content:space-between;align-items:center;border-bottom:4px solid #f0c95b;padding-bottom:17px}.brand{font-size:12px;letter-spacing:.18em;color:#4387c8;font-weight:800}.top h1{font-size:26px;margin:7px 0 0;color:#172b46}.top p{margin:5px 0;color:#6d8197}.photo{width:92px;height:110px;object-fit:cover;border:1px solid #dce6ef;border-radius:8px}section{margin-top:23px;break-inside:avoid}h2{font-size:14px;color:#fff;background:#172b46;padding:8px 10px;margin:0 0 12px}h3{font-size:12px;color:#2b4968;margin:14px 0 7px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.field{border-bottom:1px solid #e4ebf1;padding:5px 4px;min-height:38px}.field small{display:block;color:#71859a;font-size:9px;margin-bottom:4px}.field strong{display:block;color:#203a55;font-size:11px;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse;margin:8px 0;font-size:10px}th{background:#edf4fa;color:#506b84;text-align:left}td,th{padding:7px;border:1px solid #dce6ef;vertical-align:top}.notes{white-space:pre-wrap;line-height:1.5}.actions{text-align:right;margin:18px 0}.actions button{background:#4387c8;color:white;border:0;border-radius:6px;padding:10px 15px;font-weight:bold}.muted{color:#8192a4}.foot{margin-top:26px;padding-top:12px;border-top:1px solid #dfe7ef;color:#73849a;font-size:9px}@media print{body{padding:0;background:#fff}.sheet{max-width:none;border:0;padding:0}.actions{display:none}section{break-inside:avoid}}</style></head><body><main class="sheet"><p>Preparando ficha…</p></main></body></html>');
+  printable.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Ficha deportiva</title><style>${printStyles}</style></head><body><main class="sheet"><p>Preparando ficha…</p></main></body></html>`);
   printable.document.close();
   const [measurements, progress] = await Promise.all([
     supabase.from('student_measurements').select('*').eq('student_id', student.id).order('measurement_date'),
@@ -38,9 +79,9 @@ export async function downloadStudentDossierPdf(student) {
   const timeline = section('9 · Seguimiento formativo', textRows((progress.data || []).map((row) => ({ ...row, created_at: humanDate(row.created_at?.slice(0, 10)) })), ['created_at', 'title', 'details'], ['Fecha', 'Avance', 'Observación']));
   const imagePath = p.profile_photo_path;
   let image = '';
-  if (imagePath) { const { data } = await supabase.storage.from('student-photos').createSignedUrl(imagePath, 300); if (data?.signedUrl) image = `<img class="photo" src="${esc(data.signedUrl)}" alt="Foto del estudiante">`; }
-  const body = `${profile}${contacts}${background}${assessment}${goals}${competitions}${grades}${measurementsSection}${timeline}${section('10 · Seguimiento del entrenador', `<p><b>Fortalezas:</b> ${esc(p.coach_strengths)}</p><p><b>Aspectos por mejorar:</b> ${esc(p.coach_improvements)}</p><p><b>Recomendaciones:</b> ${esc(p.coach_recommendations)}</p><div class="grid">${line('Entrenador responsable', p.instructor_responsible)}${line('Fecha de revisión', humanDate(p.instructor_record_date))}${line('Etapa actual', p.athlete_stage)}</div>`)}<footer class="foot">TAEWOONG · Club Especializado Formativo de Taekwondo · Ficha privada del deportista</footer>`;
-  printable.document.querySelector('.sheet').innerHTML = `<header class="top"><div><div class="brand">CLUB TAEWOONG</div><h1>Ficha deportiva individual</h1><p>${esc(p.full_name)} · ${esc(p.cedula)}</p></div>${image}</header>${body}<div class="actions"><button onclick="window.print()">Guardar como PDF / Imprimir</button></div>`;
+  if (imagePath) { const { data } = await supabase.storage.from('student-photos').createSignedUrl(imagePath, 300); if (data?.signedUrl) image = `<img class="student-photo" src="${esc(data.signedUrl)}" alt="Foto del estudiante">`; }
+  const body = `${profile}${contacts}${background}${assessment}${goals}${competitions}${grades}${measurementsSection}${timeline}${section('10 · Seguimiento del entrenador', `<div class="grid">${line('Fortalezas', p.coach_strengths)}${line('Aspectos por mejorar', p.coach_improvements)}${line('Recomendaciones', p.coach_recommendations)}${line('Entrenador responsable', p.instructor_responsible)}${line('Fecha de revisión', humanDate(p.instructor_record_date))}${line('Etapa actual', p.athlete_stage)}</div>`)}<footer class="report-footer"><span>TAEWOONG · Disciplina · Perseverancia · Excelencia</span><span>Ficha privada del deportista · ${humanDate(new Date().toISOString().slice(0, 10))}</span></footer>`;
+  printable.document.querySelector('.sheet').innerHTML = `<div class="brand-bar"></div><header class="report-header"><div><div class="brand-lockup"><img src="/taekwondo-logo.png" alt=""><div><strong>TAEWOONG</strong><small>Club especializado formativo de Taekwondo</small></div></div><p class="report-kicker">Expediente deportivo · ficha individual</p><h1>${esc(p.full_name)}</h1><p class="student-id">Cédula ${esc(p.cedula)} · Código ${esc(p.internal_code)}</p><div class="summary-chips"><span>${esc(p.branch === 'el_condado' ? 'Matriz · El Condado' : p.branch === 'pomasqui' ? 'Sucursal · Pomasqui' : 'Sede sin asignar')}</span><span>${esc(p.level)}</span><span>${esc(p.belt_rank || 'Cinturón por registrar')}</span></div></div>${image || '<div class="student-photo" aria-hidden="true"></div>'}</header>${body}<div class="actions"><button onclick="window.print()">Guardar como PDF / Imprimir</button></div>`;
   printable.document.title = `Ficha deportiva - ${p.full_name}`;
   await Promise.all([...printable.document.images].map((item) => item.decode().catch(() => {})));
   printable.focus();

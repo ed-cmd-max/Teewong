@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AulaPage from './AulaPage.jsx';
+import { supabase } from './lib/supabase.js';
 
 const navigation = [
   ['Inicio', './index.html', 'home'],
@@ -30,7 +31,7 @@ const instagramUrl = 'https://www.instagram.com/tae.woong2024/';
 const matrixAddress = 'N71C San José del Condado OE4-374, local 2';
 const matrixMapUrl = 'https://www.google.com/maps/search/?api=1&query=N71C+San+Jose+del+Condado+OE4-374+local+2+Quito';
 const pomasquiMapUrl = 'https://maps.app.goo.gl/dG8jZ2cRKmvSAYSr9';
-const galleryImages = Object.entries(import.meta.glob('../fotos/*.jfif', { eager: true, query: '?url', import: 'default' })).sort(([first], [second]) => first.localeCompare(second)).map(([path, src], index) => ({ src, alt: 'Actividad de Taekwondo en Club Taewoong, foto ' + (index + 1) }));
+const localGalleryImages = Object.entries(import.meta.glob('../fotos/*.jfif', { eager: true, query: '?url', import: 'default' })).sort(([first], [second]) => first.localeCompare(second)).map(([path, src], index) => ({ src, alt: 'Actividad de Taekwondo en Club Taewoong, foto ' + (index + 1) }));
 
 const experiencePoints = ['Conocer el dojang y al instructor.', 'Integrarse al grupo de su edad y nivel.', 'Experimentar una clase real de Taekwondo.', 'Conocer nuestra metodología y nuestros valores.'];
 const enrollmentIncludes = ['Registro del estudiante.', 'Organización de su ficha deportiva.', 'Ingreso formal al programa de entrenamiento.', 'Orientación inicial a padres y representantes.'];
@@ -69,8 +70,22 @@ function ScheduleCard({ item }) {
 
 function GallerySection() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [galleryImages, setGalleryImages] = useState(localGalleryImages);
   const [showAll, setShowAll] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  useEffect(() => {
+    let active = true;
+    if (!supabase) return () => { active = false; };
+    supabase.from('gallery_photos').select('id,storage_path,caption').eq('published', true).order('created_at', { ascending: false }).then(({ data }) => {
+      if (!active || !data?.length) return;
+      const uploaded = data.map((photo) => ({
+        src: supabase.storage.from('gallery-photos').getPublicUrl(photo.storage_path).data.publicUrl,
+        alt: photo.caption || 'Fotografía de actividades del Club Taewoong',
+      }));
+      setGalleryImages([...uploaded, ...localGalleryImages]);
+    });
+    return () => { active = false; };
+  }, []);
   const activeImage = galleryImages[activeIndex];
   const visibleThumbnails = Array.from({ length: Math.min(5, galleryImages.length) }, (_, offset) => (activeIndex + offset - 2 + galleryImages.length) % galleryImages.length);
   const moveImage = (step) => setActiveIndex((index) => (index + step + galleryImages.length) % galleryImages.length);
