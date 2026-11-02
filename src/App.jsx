@@ -177,10 +177,11 @@ function HomeStorySection() {
 function HomePage({ onEnroll }) {
   return <>
     <section className="hero home-hero">
-      <div className="hero-copy"><div className="eyebrow">Disciplina · Perseverancia · Integridad</div><h1>Más que un deporte,<br /><em>un estilo de vida.</em></h1><p>Taekwondo para niñas, niños, jóvenes y adultos. Aprende, mejora tu condición física y gana confianza paso a paso, en un ambiente seguro y respetuoso.</p><div className="actions"><a className="button button-primary" href="./costos.html#experiencia">Agenda tu clase de experiencia · $2</a><a className="button button-outline" href="./programas.html">Conoce los programas</a><button className="button button-primary" type="button" onClick={onEnroll}>Inscríbete</button></div></div>
+      <div className="hero-copy"><div className="eyebrow">Disciplina · Perseverancia · Integridad</div><h1>Más que un deporte,<br /><em>un estilo de vida.</em></h1><p>Taekwondo para niñas, niños, jóvenes y adultos. Aprende, mejora tu condición física y gana confianza paso a paso, en un ambiente seguro y respetuoso.</p><div className="actions"><a className="button button-primary" href="./costos.html#experiencia">Agenda tu clase de experiencia · $2</a><a className="button button-outline" href="./programas.html">Conoce los programas</a></div></div>
       <div className="home-hero-visual">
         <img className="home-hero-photo" src={homeHeroImage?.src} alt="Una estudiante practica Taekwondo con el acompañamiento de su instructora en el dojang." />
         <div className="home-hero-photo-shade" />
+        <div className="home-hero-logo-wrap"><img className="home-hero-logo" src="/taekwondo-logo.png" alt="Logo de TAE WOONG" /></div>
         <div className="home-hero-photo-label"><span>FORMACIÓN · DISCIPLINA · VALORES</span><strong>Cada paso<br />cuenta.</strong></div>
         <div className="home-hero-proof"><span className="home-hero-proof-mark">20<sup>+</sup></span><span><strong>Años de experiencia</strong><small>formando con propósito</small></span></div>
         <span className="home-hero-location">📍 El Condado · Pomasqui</span>
