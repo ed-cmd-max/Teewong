@@ -164,17 +164,6 @@ function EnrollmentModal({ onClose }) {
     </section>
   </div>;
 }
-function HomeStorySection() {
-  return <section className="home-story-section" id="historia">
-    <div className="home-story-heading"><div><div className="eyebrow">Nuestra historia · 2022–2024</div><h2>Una pasión que se convierte en legado.</h2><p>Más de 20 años de dedicación, aprendizaje y pasión por el Taekwondo.</p></div><a className="text-link" href="./club.html">Conoce nuestra historia <span>→</span></a></div>
-    <div className="home-story-grid">
-      <article className="home-story-lead"><span className="home-story-kicker">TAEWOONG · FORMACIÓN · LEGADO</span><h3>Conocimiento que se construye con dedicación, disciplina y pasión.</h3><p>La trayectoria de la Maestra Patricia Túqueres es el origen de una filosofía que forma deportistas y personas con respeto, confianza y carácter.</p><a href="./club.html">La historia completa <span>↗</span></a></article>
-      <div className="home-story-timeline"><article><span>2022</span><div><h3>El Condado</h3><p>Nace TAEWOONG, nuestra matriz y primera sede.</p></div></article><article><span>2024</span><div><h3>Pomasqui</h3><p>Una nueva sede comparte la misma esencia y acompaña a otra comunidad.</p></div></article><div className="home-story-foot">Dos sedes. Una misma esencia.</div></div>
-    </div>
-    <div className="home-purpose-grid"><article><span className="eyebrow">Nuestra misión</span><h3>Formar personas dentro y fuera del dojang.</h3><p>Enseñar Taekwondo con dedicación para fortalecer disciplina, respeto, confianza y carácter en cada deportista.</p></article><article><span className="eyebrow">Nuestra visión</span><h3>Crecer juntos, con una misma esencia.</h3><p>Consolidar una comunidad que acompaña a cada alumno a aprender, superar sus límites y descubrir de lo que es capaz.</p></article></div>
-  </section>;
-}
-
 function HomePage({ onEnroll }) {
   return <>
     <section className="hero home-hero">
@@ -182,7 +171,6 @@ function HomePage({ onEnroll }) {
       <div className="hero-badge"><img className="hero-logo" src="/taekwondo-logo-transparent.png" alt="TAE WOONG, Club Especializado Formativo de Taekwondo" /></div>
     </section>
     <div className="trust"><span>🥋 Grupos por edad y nivel</span><span>📍 Matriz: El Condado · Sucursal: Pomasqui</span><span>⭐ Clase de experiencia · $2</span></div>
-    <HomeStorySection />
     <section className="locations-section" id="sedes"><div className="locations-heading"><div className="eyebrow">Encuéntranos en Quito</div><h2>Dos sedes, el mismo propósito.</h2><p>Elige la sede y consulta cómo llegar. Los horarios publicados corresponden a Pomasqui.</p></div><div className="locations-grid"><article className="location-card"><span className="location-kind">Matriz</span><h3>El Condado</h3><p>{matrixAddress} · Quito</p><a className="button button-outline-dark" href={matrixMapUrl} target="_blank" rel="noreferrer">Ver ubicación en Google Maps ↗</a></article><article className="location-card location-card-featured"><span className="location-kind">Sucursal</span><h3>Pomasqui</h3><p>Consulta el pin de la sucursal y encuentra la ruta en el mapa.</p><a className="button button-red" href={pomasquiMapUrl} target="_blank" rel="noreferrer">Cómo llegar a Pomasqui ↗</a></article></div><div className="locations-contact"><span>¿Tienes dudas sobre sedes, clases o inscripción?</span><div className="social-links"><a className="text-link" href={whatsappUrl} target="_blank" rel="noreferrer">Escríbenos por WhatsApp <span>→</span></a><a className="text-link" href={instagramUrl} target="_blank" rel="noreferrer">Síguenos en Instagram <span>↗</span></a></div></div></section>
     <GallerySection />
     <section className="home-cta"><div><div className="eyebrow">El primer paso</div><h2>Tu formación comienza aquí.</h2></div><div className="actions"><a className="button button-outline-dark" href="./horarios.html">Ver horarios</a><button className="button button-primary" type="button" onClick={onEnroll}>Inscríbete</button></div></section>
@@ -191,13 +179,17 @@ function HomePage({ onEnroll }) {
 
 function ClubPage() {
   return <main className="inner-page">
-    <section className="club-page"><PageIntro eyebrow="Nuestra historia · Desde 2022" title="Una pasión que se convierte en legado." text="Más de 20 años de dedicación, aprendizaje y pasión por el Taekwondo." />
-      <div className="about-grid"><div className="about-card"><div className="about-card-label"><span className="about-card-dot" /> TAEWOONG · DOS SEDES · UNA ESENCIA</div><div className="about-card-mark" aria-hidden="true">TW</div><div className="about-card-message"><b>Conocimiento<br /><span>que deja huella.</span></b><p>Disciplina, respeto, confianza y carácter para crecer dentro y fuera del dojang.</p></div><div className="about-card-footer">El Condado <i>·</i> Pomasqui <i>·</i> Desde 2022</div></div>
-        <div className="about-story"><div className="eyebrow">La trayectoria de la Maestra Patricia Túqueres</div><h2>Una historia de dedicación al Taekwondo y a la formación.</h2><p className="body-copy">TAEWOONG nace de la trayectoria de la Maestra Patricia Túqueres, fundadora, formadora y Referee de Poomsae y Kyorugi a nivel provincial, nacional e internacional. Su experiencia, conocimiento y compromiso con las nuevas generaciones son la base de una filosofía que forma deportistas y personas con disciplina, respeto, confianza y carácter.</p><p className="body-copy">Actualmente, la Maestra Patricia es líder del grupo de Referees de la Federación Ecuatoriana de Taekwondo.</p><p className="body-copy">En 2022 nace TAEWOONG El Condado, nuestra matriz y primera sede. Este espacio se creó para compartir conocimientos, desarrollar habilidades y acompañar a cada deportista en su crecimiento dentro y fuera del dojang.</p><p className="body-copy">El nombre TAEWOONG representa el conocimiento profundo, como homenaje a la trayectoria y dedicación de la Maestra Patricia al Taekwondo.</p><p className="body-copy">En 2024 nace TAEWOONG Pomasqui, ampliando nuestra presencia y acercando nuestra filosofía a una nueva comunidad. La sede está bajo la representación de la Lic. Sara Túqueres, Coach certificada en Pichincha y actualmente Referee Provincial. Pomasqui cuenta con su propia identidad y dinámica, manteniendo los valores y principios que dieron origen a TAEWOONG.</p>
-          <div className="values"><div className="value"><strong>Disciplina</strong><p>Para avanzar.</p></div><div className="value"><strong>Perseverancia</strong><p>Para no rendirse.</p></div><div className="value"><strong>Integridad</strong><p>Para hacer siempre lo correcto.</p></div></div>
+    <section className="club-page team-about-page"><PageIntro eyebrow="Team Taewoong Pomasqui" title="¿Quiénes somos?" text="Formación integral de niños, niñas, jóvenes y adultos a través del Taekwondo." />
+      <article className="team-about-card">
+        <div className="team-about-mark"><img src="/taekwondo-logo-transparent.png" alt="Logo de Taewoong Pomasqui" /></div>
+        <div className="team-about-copy">
+          <span className="eyebrow">Formación · Valores · Superación</span>
+          <h2>Crecer con confianza, disciplina y perseverancia.</h2>
+          <p>Somos Team Taewoong Pomasqui, un equipo deportivo comprometido con la formación integral de niños, niñas, jóvenes y adultos a través del Taekwondo.</p>
+          <p>Creemos que el deporte es una herramienta poderosa para transformar vidas, construir valores y desarrollar personas capaces de afrontar los desafíos de la sociedad. Por ello, nuestra labor va más allá de enseñar técnicas, movimientos y estrategias de combate: buscamos formar seres humanos íntegros, seguros, disciplinados, respetuosos y perseverantes.</p>
+          <p>Promovemos un entorno de aprendizaje donde cada deportista descubre sus capacidades, supera sus propios límites y aprende que el éxito también se refleja en el carácter, las actitudes y las huellas positivas que deja en los demás.</p>
         </div>
-      </div>
-      <div className="club-promise"><div className="eyebrow">Dos sedes. Una misma esencia.</div><h2>El Condado y Pomasqui comparten una visión: <em>crecer juntos.</em></h2><p>Somos una misma familia y acompañamos a cada alumno para que aprenda, crezca, supere sus límites y descubra de lo que es capaz.</p><blockquote>Es disciplina. Es confianza. Es carácter. Es superación.</blockquote><p className="club-signature">TAEWOONG · Conocimiento que se construye con dedicación, disciplina y pasión.</p></div>
+      </article>
     </section>
   </main>;
 }
@@ -210,7 +202,7 @@ function ProgramsPage() {
 
 function SchedulePage() {
   return <main className="inner-page"><section className="schedule-section"><PageIntro eyebrow="Sucursal Pomasqui · Quito" title="Horarios de entrenamiento." text="Estos horarios corresponden a la sucursal de Pomasqui. La matriz de El Condado maneja horarios diferentes; contáctanos para consultar su disponibilidad." />
-    <div className="schedule-location-link"><span>📍 Horarios de la sucursal Pomasqui</span><a href={pomasquiMapUrl} target="_blank" rel="noreferrer">Ver ubicación ↗</a></div>
+    <div className="schedule-location-link"><span>📍 Horario Sucursal Pomasqui</span><a href={pomasquiMapUrl} target="_blank" rel="noreferrer">Ver ubicación ↗</a></div>
     <div className="schedule-grid">{schedules.map((item) => <ScheduleCard item={item} key={item.level} />)}</div>
     <aside className="attendance-note"><span className="attendance-icon">✓</span><div><h2>Modalidad de asistencia</h2><p>En el proceso formativo no competitivo se requiere una asistencia mínima de <strong>3 días por semana</strong>, dentro de los horarios establecidos para cada nivel. Esta frecuencia favorece la continuidad, el aprendizaje técnico y el desarrollo físico y formativo.</p><p>En el nivel competitivo, la frecuencia se determina de acuerdo con los objetivos y la planificación deportiva de cada atleta.</p></div></aside>
     <p className="schedule-footnote">Elige tu horario, entrena con propósito y avanza paso a paso.</p>
