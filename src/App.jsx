@@ -187,9 +187,15 @@ function ClubPage() {
           <h2>Crecer con confianza, disciplina y perseverancia.</h2>
           <p>Somos Team Taewoong Pomasqui, un equipo deportivo comprometido con la formación integral de niños, niñas, jóvenes y adultos a través del Taekwondo.</p>
           <p>Creemos que el deporte es una herramienta poderosa para transformar vidas, construir valores y desarrollar personas capaces de afrontar los desafíos de la sociedad. Por ello, nuestra labor va más allá de enseñar técnicas, movimientos y estrategias de combate: buscamos formar seres humanos íntegros, seguros, disciplinados, respetuosos y perseverantes.</p>
-          <p>Promovemos un entorno de aprendizaje donde cada deportista descubre sus capacidades, supera sus propios límites y aprende que el éxito también se refleja en el carácter, las actitudes y las huellas positivas que deja en los demás.</p>
+          <p>Promovemos un entorno de aprendizaje donde cada deportista descubre sus capacidades, supera sus propios límites y aprende que el verdadero éxito no se mide únicamente en medallas, sino también en el carácter, las actitudes y las huellas positivas que deja en los demás.</p>
+          <p className="team-about-closing">En Team Taewoong Pomasqui formamos personas para la vida y deportistas para el futuro.</p>
         </div>
       </article>
+      <div className="team-principles-grid">
+        <article className="team-principle-card"><span className="eyebrow">Nuestra misión</span><h2>Formación integral a través del Taekwondo.</h2><p>Contribuir a la formación integral de seres humanos a través del Taekwondo, utilizando el deporte como una herramienta educativa para desarrollar valores, habilidades y capacidades físicas, técnicas y emocionales.</p><p>Nos comprometemos a brindar una formación deportiva de calidad, basada en el respeto, la disciplina, la perseverancia, la integridad y el espíritu de superación, formando deportistas capaces de alcanzar sus metas, afrontar desafíos y convertirse en agentes positivos de cambio dentro de su entorno y la sociedad.</p></article>
+        <article className="team-principle-card team-vision-card"><span className="eyebrow">Nuestra visión</span><h2>Un referente formativo y competitivo.</h2><p>Ser un equipo deportivo referente en el ámbito formativo y competitivo, reconocido por su compromiso con la formación humana y el desarrollo integral de sus deportistas.</p><p>Aspiramos a construir una comunidad deportiva sólida, donde el Taekwondo sea un camino de transformación personal, excelencia deportiva y crecimiento colectivo; formando generaciones de personas con valores, líderes dentro y fuera del dojang y deportistas preparados para representar con orgullo a Team Taewoong Pomasqui en escenarios locales, nacionales e internacionales.</p></article>
+      </div>
+      <section className="team-philosophy"><span className="eyebrow">Nuestra filosofía</span><h2>Más que formar deportistas,<br /><em>formamos seres humanos.</em></h2><p>El verdadero triunfo comienza en la persona.</p><span className="team-philosophy-note">Creemos en un Taekwondo que educa, transforma, fortalece y prepara para la vida.</span><strong>TEAM TAEWOONG POMASQUI</strong><small>Formación para la vida · Excelencia deportiva</small></section>
     </section>
   </main>;
 }
