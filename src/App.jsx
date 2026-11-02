@@ -32,7 +32,6 @@ const matrixAddress = 'N71C San José del Condado OE4-374, local 2';
 const matrixMapUrl = 'https://www.google.com/maps/search/?api=1&query=N71C+San+Jose+del+Condado+OE4-374+local+2+Quito';
 const pomasquiMapUrl = 'https://maps.app.goo.gl/dG8jZ2cRKmvSAYSr9';
 const localGalleryImages = Object.entries(import.meta.glob('../fotos/*.jfif', { eager: true, query: '?url', import: 'default' })).sort(([first], [second]) => first.localeCompare(second)).map(([path, src], index) => ({ src, alt: 'Actividad de Taekwondo en Club Taewoong, foto ' + (index + 1) }));
-const homeHeroImage = localGalleryImages.find(({ src }) => src.includes('0dd12d43-938a-4ad7-9f8e-f27a3c2c5e6e')) || localGalleryImages[0];
 
 const experiencePoints = ['Conocer el dojang y al instructor.', 'Integrarse al grupo de su edad y nivel.', 'Experimentar una clase real de Taekwondo.', 'Conocer nuestra metodología y nuestros valores.'];
 const enrollmentIncludes = ['Registro del estudiante.', 'Organización de su ficha deportiva.', 'Ingreso formal al programa de entrenamiento.', 'Orientación inicial a padres y representantes.'];
@@ -178,14 +177,7 @@ function HomePage({ onEnroll }) {
   return <>
     <section className="hero home-hero">
       <div className="hero-copy"><div className="eyebrow">Disciplina · Perseverancia · Integridad</div><h1>Más que un deporte,<br /><em>un estilo de vida.</em></h1><p>Taekwondo para niñas, niños, jóvenes y adultos. Aprende, mejora tu condición física y gana confianza paso a paso, en un ambiente seguro y respetuoso.</p><div className="actions"><a className="button button-primary" href="./costos.html#experiencia">Agenda tu clase de experiencia · $2</a><a className="button button-outline" href="./programas.html">Conoce los programas</a></div></div>
-      <div className="home-hero-visual">
-        <img className="home-hero-photo" src={homeHeroImage?.src} alt="Una estudiante practica Taekwondo con el acompañamiento de su instructora en el dojang." />
-        <div className="home-hero-photo-shade" />
-        <div className="home-hero-logo-wrap"><img className="home-hero-logo" src="/taekwondo-logo.png" alt="Logo de TAE WOONG" /></div>
-        <div className="home-hero-photo-label"><span>FORMACIÓN · DISCIPLINA · VALORES</span><strong>Cada paso<br />cuenta.</strong></div>
-        <div className="home-hero-proof"><span className="home-hero-proof-mark">20<sup>+</sup></span><span><strong>Años de experiencia</strong><small>formando con propósito</small></span></div>
-        <span className="home-hero-location">📍 El Condado · Pomasqui</span>
-      </div>
+      <div className="hero-badge"><img className="hero-logo" src="/taekwondo-logo.png" alt="TAE WOONG, Club Especializado Formativo de Taekwondo" /></div>
     </section>
     <div className="trust"><span>🥋 Grupos por edad y nivel</span><span>📍 Matriz: El Condado · Sucursal: Pomasqui</span><span>⭐ Clase de experiencia · $2</span></div>
     <HomeStorySection />
