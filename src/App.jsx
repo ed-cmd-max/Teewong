@@ -17,13 +17,15 @@ const classes = [
   { number: '01', title: 'Pequeños guerreros', category: 'Taekwondo Kids', age: 'De 4 a 7 años', text: 'Desarrollamos disciplina, confianza, respeto y perseverancia con una enseñanza cercana, divertida y llena de retos.' },
   { number: '02', title: 'Juvenil y formativo', category: 'Principiantes', age: 'Desde los 8 años', text: 'Fortalecemos la disciplina, la confianza, la técnica y el espíritu competitivo, acompañando a cada deportista en su proceso.' },
   { number: '03', title: 'Intermedios y avanzados', category: 'Proyección deportiva', age: 'Según nivel y progreso', text: 'Perfecciona tu técnica y continúa avanzando con el acompañamiento del equipo de instructores.' },
+  { number: '04', title: 'Taekwondo para adultos', category: 'Horario especial', age: 'Adultos', text: 'Entrena tres días por semana, una hora por sesión, y trabaja tu condición física, defensa personal, disciplina y bienestar.' },
 ];
 
 const schedules = [
-  { level: 'Taekwondo Kids', age: '4 a 7 años', days: 'Lunes a jueves', kind: 'kids', times: [['Tarde', '17:15 – 18:15']] },
+  { level: 'Taekwondo Kids', age: '4 a 7 años', days: 'Lunes a jueves', kind: 'kids', times: [['Tarde', '17:00 – 18:00']] },
   { level: 'Principiantes', age: 'Desde los 8 años', days: 'Lunes a jueves', kind: 'beginner', times: [['Mañana', '08:00 – 09:15'], ['Tarde', '15:30 – 16:45'], ['Noche', '18:15 – 19:30']] },
   { level: 'Intermedios', age: 'De acuerdo con el nivel', days: 'Lunes a jueves', kind: 'intermediate', times: [['Mañana', '08:00 – 09:30'], ['Tarde', '15:30 – 17:00'], ['Noche', '18:00 – 19:30']] },
   { level: 'Avanzados', age: 'Nivel competitivo', days: 'Lunes a viernes', kind: 'advanced', times: [['Mañana', '08:00 – 09:30'], ['Tarde', '15:30 – 17:00'], ['Noche', '18:00 – 19:30']] },
+  { level: 'Adultos · horario especial', age: 'Adultos', days: '3 días por semana', kind: 'adult', times: [['Noche', '19:00 – 20:00']] },
 ];
 
 const whatsappUrl = 'https://wa.me/593997984504?text=Hola%2C%20quisiera%20informaci%C3%B3n%20del%20Club%20Taewoong.';
@@ -177,7 +179,7 @@ function HomePage({ onEnroll }) {
   return <>
     <section className="hero home-hero">
       <div className="hero-copy"><div className="eyebrow">Disciplina · Perseverancia · Integridad</div><h1>Más que un deporte,<br /><em>un estilo de vida.</em></h1><p>Taekwondo para niñas, niños, jóvenes y adultos. Aprende, mejora tu condición física y gana confianza paso a paso, en un ambiente seguro y respetuoso.</p><div className="actions"><a className="button button-primary" href="./costos.html#experiencia">Agenda tu clase de experiencia · $2</a><a className="button button-outline" href="./programas.html">Conoce los programas</a></div></div>
-      <div className="hero-badge"><img className="hero-logo" src="/taekwondo-logo.png" alt="TAE WOONG, Club Especializado Formativo de Taekwondo" /></div>
+      <div className="hero-badge"><img className="hero-logo" src="/taekwondo-logo-transparent.png" alt="TAE WOONG, Club Especializado Formativo de Taekwondo" /></div>
     </section>
     <div className="trust"><span>🥋 Grupos por edad y nivel</span><span>📍 Matriz: El Condado · Sucursal: Pomasqui</span><span>⭐ Clase de experiencia · $2</span></div>
     <HomeStorySection />
