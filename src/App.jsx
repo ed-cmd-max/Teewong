@@ -10,7 +10,7 @@ const navigation = [
   ['Costos', './costos.html', 'costos'],
   ['Políticas', './politicas.html', 'politicas'],
   ['Aula virtual', './aula.html', 'aula'],
-  ['Galería', './index.html#galeria', 'galeria'],
+  ['Ver galería', './index.html#galeria', 'galeria'],
 ];
 
 const classes = [
